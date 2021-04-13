@@ -1,0 +1,9 @@
+{
+  "name": "UNQ Fungible Governance Token",
+  "decimals": 18,
+  "description": "UNQ is a fungible token for governance of Unique Directory ecosystem. This token is issued for authors of approved submissions. Read more [here](https://docs.unique.directory)",
+  "image": "ipfs://QmbwUbKHHrWpK5RNUX3kQYwDe7HQ2LjXjgvUTe8FpHHyj4",
+  "properties": {
+    "symbol": "UNQ"
+  }
+}

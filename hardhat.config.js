@@ -1,14 +1,16 @@
 require("@nomiclabs/hardhat-waffle");
+require('@nomiclabs/hardhat-ethers');
+require("@nomiclabs/hardhat-etherscan");
+require('dotenv').config();
 
-// This is a sample Hardhat task. To learn how to create your own go to
-// https://hardhat.org/guides/create-task.html
-task("accounts", "Prints the list of accounts", async () => {
-  const accounts = await ethers.getSigners();
+const INFURA_PROJECT_ID = process.env.INFURA_PROJECT_ID;
+const DEPLOYER_PRIVATE_KEY = process.env.DEPLOYER_PRIVATE_KEY;
+const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY;
 
-  for (const account of accounts) {
-    console.log(account.address);
-  }
-});
+if (!INFURA_PROJECT_ID || !DEPLOYER_PRIVATE_KEY || !ETHERSCAN_API_KEY) {
+  console.error("Please set INFURA_PROJECT_ID, DEPLOYER_PRIVATE_KEY and ETHERSCAN_API_KEY.");
+  return
+}
 
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
@@ -17,6 +19,26 @@ task("accounts", "Prints the list of accounts", async () => {
  * @type import('hardhat/config').HardhatUserConfig
  */
 module.exports = {
-  solidity: "0.7.3",
+  solidity: "0.8.0",
+  defaultNetwork: "localhost",
+  networks: {
+    localhost: {
+      host: "localhost",
+      port: 8545,
+      gas: 4600000,
+      network_id: "*" // Match any network id
+    },
+    rinkeby: {
+      url: `https://rinkeby.infura.io/v3/${INFURA_PROJECT_ID}`,
+      accounts: [`0x${DEPLOYER_PRIVATE_KEY}`],
+      network_id: "*",
+      gas: 4000000
+    },
+  },
+  etherscan: {
+    // Your API key for Etherscan
+    // Obtain one at https://etherscan.io/
+    apiKey: ETHERSCAN_API_KEY,
+  },
 };
 
