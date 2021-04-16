@@ -19,20 +19,31 @@ if (!INFURA_PROJECT_ID || !DEPLOYER_PRIVATE_KEY || !ETHERSCAN_API_KEY) {
  * @type import('hardhat/config').HardhatUserConfig
  */
 module.exports = {
-  solidity: "0.8.0",
+  solidity: {
+    version: "0.8.0",
+    settings: {
+      optimizer: {
+        enabled: true,
+        runs: 1500
+      }
+    }
+  },
   defaultNetwork: "localhost",
   networks: {
     localhost: {
       host: "localhost",
       port: 8545,
-      gas: 4600000,
-      network_id: "*" // Match any network id
+      network_id: "*", // Match any network id
     },
     rinkeby: {
       url: `https://rinkeby.infura.io/v3/${INFURA_PROJECT_ID}`,
       accounts: [`0x${DEPLOYER_PRIVATE_KEY}`],
       network_id: "*",
-      gas: 4000000
+    },
+    kovan: {
+      url: `https://kovan.infura.io/v3/${INFURA_PROJECT_ID}`,
+      accounts: [`0x${DEPLOYER_PRIVATE_KEY}`],
+      network_id: "*",
     },
   },
   etherscan: {

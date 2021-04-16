@@ -8,9 +8,16 @@ import "./Common.sol";
 contract Vault is Common, AccessControl, IERC1155Receiver {
     bytes32 public constant RELEASER_ROLE = keccak256("RELEASER_ROLE");
 
-    constructor(address payable releaser) {
+    address private _exchange;
+
+    constructor(
+        address payable releaser,
+        address exchange
+    ) {
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
         _setupRole(RELEASER_ROLE, releaser);
+
+        _exchange = exchange;
     }
 
     function unlockUniquette() public {

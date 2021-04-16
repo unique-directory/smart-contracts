@@ -4,6 +4,7 @@
 // When running the script with `hardhat run <script>` you'll find the Hardhat
 // Runtime Environment's members available in the global scope.
 const hre = require("hardhat");
+const web3 = require("web3");
 
 async function deployContract(contractClass, contractArguments) {
   const instance = await contractClass.deploy.apply(contractClass, contractArguments);
@@ -43,6 +44,10 @@ async function main() {
   const Vault = await hre.ethers.getContractFactory("Vault");
   const Core = await hre.ethers.getContractFactory("Core");
 
+  const exp = hre.ethers.BigNumber.from("10").pow(18);
+  const initialUniquettePrice = hre.ethers.BigNumber.from("1").mul(exp); // ETH
+  const submissionPrize = hre.ethers.BigNumber.from("5000").mul(exp); // UNQ
+
   console.log("[-] Deploying Treasury...");
   const treasury = await deployContract(Treasury, [
     deployer.address // initiator
@@ -56,11 +61,19 @@ async function main() {
   console.log("[-] Deploying Core...");
   const core = await deployContract(Core, [
     "ipfs://",
-    process.env.FUNGIBLE_TOKEN_METADATA_IPFS_HASH,
-    vault.address,
-    treasury.address,
+    process.env.FUNGIBLE_TOKEN_METADATA_HASH,
+    vault.address,    // vault
+    treasury.address, // treasury
     deployer.address, // approver
-    10000, // submission prize
+    deployer.address, // marketer
+    [
+      web3.utils.toWei('1'), // initialUniquettePrice: 1 ETH
+      5000,        // originalAuthorShare: 50%
+      500,         // protocolFee: 5%
+      web3.utils.toWei('5000'), // submissionPrize: 5000 UNQ
+      1,           // currentMetadataVersion
+      1,           // minMetadataVersion
+    ]
   ]);
 }
 
