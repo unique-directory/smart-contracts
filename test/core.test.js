@@ -21,6 +21,7 @@ async function deployCore(fakeVault, fakeTreasury, fakeApprover, fakeMarketer) {
       web3.utils.toWei('5000'), // submissionPrize: 5000 UNQ
       1,           // currentMetadataVersion
       1,           // minMetadataVersion
+      800,         // maxPriceIncrease: 8%
     ]
   );
 }
@@ -92,14 +93,28 @@ describe("Core", () => {
 
     await core.connect(userA).submitUniquette(fakeHash);
     await core.connect(fakeApprover).approveSubmission(fakeHash);
-    await core.connect(userB).safeBuy(
-      userB.address,
-      1000,
-      web3.utils.toHex('test'),
-      {
-        value: web3.utils.toWei('1.1') // 1 ETH
-      }
-    );
+    await expect(
+      await core.connect(userB).safeBuy(
+        userB.address,
+        1000,
+        web3.utils.toHex('test'),
+        {
+          value: web3.utils.toWei('1.1') // 1 ETH
+        }
+      )
+    ).to.changeEtherBalances([
+      core,
+      fakeVault,
+      fakeTreasury,
+      userA,
+      userB,
+    ], [
+      web3.utils.toWei('0'),
+      web3.utils.toWei('0.6'),
+      web3.utils.toWei('0.1'),
+      web3.utils.toWei('0.4'),
+      web3.utils.toWei('-1.1'),
+    ]);
 
     await expect(
       await core.balanceOf(userB.address, 1000)
@@ -167,5 +182,121 @@ describe("Core", () => {
         }
       )
     ).to.changeEtherBalance(userA, web3.utils.toWei('0.4'));
+  });
+
+  it("should put on sale based on desired price", async () => {
+    const [owner, fakeVault, fakeTreasury, fakeApprover, fakeMarketer, userA, userB] = accounts;
+    const core = await deployCore(fakeVault, fakeTreasury, fakeApprover, fakeMarketer);
+
+    const fakeHash = uuid();
+
+    await core.connect(userA).submitUniquette(fakeHash);
+    await core.connect(fakeApprover).approveSubmission(fakeHash);
+    await core.connect(userB).safeBuy(
+      userB.address,
+      1000,
+      web3.utils.toHex('test'),
+      {
+        value: web3.utils.toWei('1.1') // ETH
+      }
+    );
+
+    await expect(
+      await core.connect(userB).putForSale(
+        1000,
+        web3.utils.toWei('1.18')
+      )
+    ).to.emit(core, 'PutForSale')
+    .withArgs(userB.address, userB.address, 1000, web3.utils.toWei('1.18'));
+  });
+
+  it("should buy with same amount as sales price on secondary sales", async () => {
+    const [owner, fakeVault, fakeTreasury, fakeApprover, fakeMarketer, userA, userB, userC] = accounts;
+    const core = await deployCore(fakeVault, fakeTreasury, fakeApprover, fakeMarketer);
+
+    const fakeHash = uuid();
+
+    await core.connect(userA).submitUniquette(fakeHash);
+    await core.connect(fakeApprover).approveSubmission(fakeHash);
+    await core.connect(userB).safeBuy(
+      userB.address,
+      1000,
+      web3.utils.toHex('test'),
+      {
+        value: web3.utils.toWei('1.1') // ETH
+      }
+    );
+    await core.connect(userB).putForSale(
+      1000,
+      web3.utils.toWei('1.18')
+    );
+
+    await expect(
+      await core.connect(userC).safeBuy(
+        userC.address,
+        1000,
+        web3.utils.toHex('test'),
+        {
+          value: web3.utils.toWei('1.298') // ETH
+        }
+      )
+    ).to.changeEtherBalances([
+      owner, core,
+      fakeVault, fakeTreasury,
+      userA,
+      userB,
+      userC,
+    ], [
+      web3.utils.toWei('0'), web3.utils.toWei('0'),
+      web3.utils.toWei('0'), web3.utils.toWei('0.118'),
+      web3.utils.toWei('0'),
+      web3.utils.toWei('1.18'),
+      web3.utils.toWei('-1.298'),
+    ]);
+  });
+
+  it("should buy with higher amount than sales price on secondary sales", async () => {
+    const [owner, fakeVault, fakeTreasury, fakeApprover, fakeMarketer, userA, userB, userC] = accounts;
+    const core = await deployCore(fakeVault, fakeTreasury, fakeApprover, fakeMarketer);
+
+    const fakeHash = uuid();
+
+    await core.connect(userA).submitUniquette(fakeHash);
+    await core.connect(fakeApprover).approveSubmission(fakeHash);
+    await core.connect(userB).safeBuy(
+      userB.address,
+      1000,
+      web3.utils.toHex('test'),
+      {
+        value: web3.utils.toWei('1.1') // ETH
+      }
+    );
+    await core.connect(userB).putForSale(
+      1000,
+      web3.utils.toWei('1.18')
+    );
+
+    await expect(
+      await core.connect(userC).safeBuy(
+        userC.address,
+        1000,
+        web3.utils.toHex('test'),
+        {
+          value: web3.utils.toWei('4') // ETH
+        }
+      )
+    ).to.changeEtherBalances([
+      owner, core,
+      fakeVault, fakeTreasury,
+      userA,
+      userB,
+      userC,
+    ], [
+      web3.utils.toWei('0'), web3.utils.toWei('0'),
+      web3.utils.toWei('2.702'), web3.utils.toWei('0.118'),
+      web3.utils.toWei('0'),
+      web3.utils.toWei('1.18'),
+      web3.utils.toWei('-4.0'),
+    ]);
   });
 });

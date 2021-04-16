@@ -73,6 +73,7 @@ async function main() {
       web3.utils.toWei('5000'), // submissionPrize: 5000 UNQ
       1,           // currentMetadataVersion
       1,           // minMetadataVersion
+      1000,        // maxPriceIncrease: 10%
     ]
   ]);
 }

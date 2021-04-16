@@ -28,6 +28,7 @@ contract Core is ERC1155, AccessControl, ERC1155Pausable, ERC1155Burnable, Reent
         address author;
         address owner;
         uint256 collateralValue;
+        uint256 lastPurchaseAmount;
         uint256 salePrice;
         bool initialSale;
         uint256 metadataVersion;
@@ -44,6 +45,7 @@ contract Core is ERC1155, AccessControl, ERC1155Pausable, ERC1155Burnable, Reent
     event UniquetteBought(address operator, address indexed seller, address indexed buyer, uint256 indexed tokenId);
     event ProtocolFeePaid(address indexed operator, address seller, address indexed buyer, uint256 indexed tokenId, uint256 feePaid);
     event CollateralIncreased(address indexed operator, address seller, address indexed buyer, uint256 indexed tokenId, uint256 additionalCollateral);
+    event PutForSale(address indexed operator, address indexed seller, uint256 indexed tokenId, uint256 price);
 
     string private _baseURI;
     address payable private _vault;
@@ -57,6 +59,7 @@ contract Core is ERC1155, AccessControl, ERC1155Pausable, ERC1155Burnable, Reent
     uint256 private _submissionPrize;
     uint256 private _currentMetadataVersion;
     uint256 private _minMetadataVersion;
+    uint256 private _maxPriceIncrease;
 
     uint256 private _totalFungibleSupply;
 
@@ -69,7 +72,7 @@ contract Core is ERC1155, AccessControl, ERC1155Pausable, ERC1155Burnable, Reent
         address payable treasury,
         address payable approver,
         address payable marketer,
-        uint256[6] memory uints
+        uint256[7] memory uints
     ) ERC1155(baseURI) {
         _baseURI = baseURI;
         _vault = vault;
@@ -83,6 +86,7 @@ contract Core is ERC1155, AccessControl, ERC1155Pausable, ERC1155Burnable, Reent
         _submissionPrize  = uints[3];
         _currentMetadataVersion  = uints[4];
         _minMetadataVersion  = uints[5];
+        _maxPriceIncrease  = uints[6];
 
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
         _setupRole(APPROVER_ROLE, approver);
@@ -108,9 +112,7 @@ contract Core is ERC1155, AccessControl, ERC1155Pausable, ERC1155Burnable, Reent
         return super.supportsInterface(interfaceId);
     }
 
-    function totalSupply(
-        uint256 _id
-    ) public view returns (uint256) {
+    function totalSupply(uint256 _id) public view returns (uint256) {
         return _id == FUNGIBLE_TOKEN_ID ? _totalFungibleSupply : 1;
     }
 
@@ -135,37 +137,6 @@ contract Core is ERC1155, AccessControl, ERC1155Pausable, ERC1155Burnable, Reent
             _temporaryExchangeApproval[account][operator] == true ||
             // For normal fungible token case we need to respect the standard
             super.isApprovedForAll(account, operator);
-    }
-
-    function _beforeTokenTransfer(
-        address operator,
-        address from,
-        address to,
-        uint256[] memory ids,
-        uint256[] memory amounts,
-        bytes memory data
-    )
-    internal virtual override(ERC1155, ERC1155Pausable)
-    {
-        for (uint256 i = 0; i < ids.length; ++i) {
-            require(
-                // Transfers must be either on fungible tokens (UNQ)
-                ids[i] == FUNGIBLE_TOKEN_ID ||
-                // or, operated by marketer contract on non-fungible tokens (when selling on a DEX)
-                operator == _marketer ||
-                // or, operated by approver contract on non-fungible tokens (when approving a submission)
-                operator == _approver ||
-                // or, during safeBuy where we temporarily allow buyer to take over the uniquette
-                _temporaryExchangeApproval[from][operator] == true,
-                "Core: only marketer or buyer can operate non-fungible token transfers"
-            );
-
-            if (ids[i] >= UNIQUETTE_TOKENS_BASE) {
-                _uniquettes[_idToHashMapping[ids[i]]].owner = to;
-            }
-        }
-
-        super._beforeTokenTransfer(operator, from, to, ids, amounts, data);
     }
 
     function submitUniquette(string calldata hash) public nonReentrant {
@@ -222,32 +193,54 @@ contract Core is ERC1155, AccessControl, ERC1155Pausable, ERC1155Burnable, Reent
         emit UniquetteRejected(_msgSender(), originalSubmitter, hash);
     }
 
-    function safeBuy(
-        address to,
-        uint256 id,
-        bytes memory data
-    )
-    payable
-    public
-    virtual
-    nonReentrant
-    {
+    function putForSale(uint256 id, uint256 price) payable public virtual nonReentrant {
         // Check if uniquette is sellable
-        Uniquette memory uniquette = _uniquettes[_idToHashMapping[id]];
+        require(id >= UNIQUETTE_TOKENS_BASE, "Core: only non-fungible uniquettes can be put on sale");
+
+        string memory hash = _idToHashMapping[id];
+        require(_uniquettes[hash].author != address(0), "Core: uniquette does not exist");
+        require(_uniquettes[hash].status == UniquetteStatus.Approved, "Core: uniquette not approved");
+
+        // The account putting uniquette on sale, it can be different than seller.
+        address operator = _msgSender();
+        address owner = _uniquettes[hash].owner;
+
+        require(
+            _uniquettes[hash].owner == _msgSender() || isApprovedForAll(_uniquettes[hash].owner, _msgSender()),
+            'Core: caller is not owner nor approved'
+        );
+
+        // Check if price is reasonable
+        uint256 minSensiblePrice = _uniquettes[hash].collateralValue;
+        uint256 maxAllowedPriceByCollateral = _uniquettes[hash].collateralValue + ((_maxPriceIncrease * _uniquettes[hash].collateralValue) / 10000);
+        uint256 maxAllowedPriceByLastPurchase = _uniquettes[hash].lastPurchaseAmount + ((_maxPriceIncrease * _uniquettes[hash].lastPurchaseAmount) / 10000);
+
+        require(price > minSensiblePrice, "Core: sale price must be more than collateral");
+        require(price <= maxAllowedPriceByCollateral || price <= maxAllowedPriceByLastPurchase, "Core: sale price exceeds max allowed");
+
+        _uniquettes[hash].salePrice = price;
+
+        emit PutForSale(operator, _uniquettes[hash].owner, id, price);
+    }
+
+    function safeBuy(address to, uint256 id, bytes memory data) payable public virtual nonReentrant {
+        // Check if uniquette is sellable
+        string memory hash = _idToHashMapping[id];
+
         require(to != address(0), "Core: buy to the zero address");
-        require(uniquette.author != address(0), "Core: uniquette does not exist");
-        require(uniquette.status == UniquetteStatus.Approved, "Core: uniquette not approved");
-        require(uniquette.salePrice > 0 , "Core: uniquette not for sale");
+        require(_uniquettes[hash].author != address(0), "Core: uniquette does not exist");
+        require(_uniquettes[hash].status == UniquetteStatus.Approved, "Core: uniquette not approved");
+        require(_uniquettes[hash].salePrice > 0 , "Core: uniquette not for sale");
         require(id >= UNIQUETTE_TOKENS_BASE, "Core: only non-fungible uniquettes can be bought");
 
         // The account buying the uniquette, it can be different than buyer and seller.
         address operator = _msgSender();
 
         // Check if ETH payment is enough
-        uint256 protocolFeeAmount = uniquette.salePrice * _protocolFee / 10000;
+        uint256 protocolFeeAmount = _uniquettes[hash].salePrice * _protocolFee / 10000;
 
         require(
-            msg.value >= uniquette.salePrice + protocolFeeAmount,
+            msg.value >= _uniquettes[hash].salePrice + protocolFeeAmount,
             "Core: insufficient payment for sale price plus protocol fee"
         );
 
@@ -255,36 +248,61 @@ contract Core is ERC1155, AccessControl, ERC1155Pausable, ERC1155Burnable, Reent
         address saleAmountReceiver;
 
         // Find out who should be paid for the sale and how much
-        if (uniquette.initialSale) {
-            uniquette.initialSale = false;
-            saleReceivableAmount = uniquette.salePrice * _originalAuthorShare / 10000;
-            saleAmountReceiver = uniquette.author;
+        if (_uniquettes[hash].initialSale) {
+            _uniquettes[hash].initialSale = false;
+            saleReceivableAmount = _uniquettes[hash].salePrice * _originalAuthorShare / 10000;
+            saleAmountReceiver = _uniquettes[hash].author;
         } else {
-            saleReceivableAmount = uniquette.salePrice;
-            saleAmountReceiver = uniquette.owner;
+            saleReceivableAmount = _uniquettes[hash].salePrice;
+            saleAmountReceiver = _uniquettes[hash].owner;
         }
 
         // Calculate extra ETH sent to be kept as collateral
         uint256 additionalCollateral = msg.value - saleReceivableAmount - protocolFeeAmount;
-        uniquette.collateralValue += additionalCollateral;
+        _uniquettes[hash].collateralValue += additionalCollateral;
+
+        // Remember last amount this uniquette was sold for
+        _uniquettes[hash].lastPurchaseAmount = msg.value;
 
         // Transfer ownership of uniquette in ERC-1155 fashion
-        _temporaryExchangeApproval[uniquette.owner][operator] = true;
-        safeTransferFrom(uniquette.owner, to, id, 1, data);
-        delete _temporaryExchangeApproval[uniquette.owner][operator];
-        emit UniquetteBought(operator, uniquette.owner, to, id);
+        _temporaryExchangeApproval[_uniquettes[hash].owner][operator] = true; // TODO: is there a safer way to allow internal calls
+        safeTransferFrom(_uniquettes[hash].owner, to, id, 1, data);
+        delete _temporaryExchangeApproval[_uniquettes[hash].owner][operator];
+        emit UniquetteBought(operator, _uniquettes[hash].owner, to, id);
 
         // Make sure receiver is aware of this ERC-1155 transfer
-        _doSafeBatchTransferAcceptanceCheckInternal(operator, uniquette.owner, to, _asSingletonArrayPrivate(id), _asSingletonArrayPrivate(1), data);
+        _doSafeBatchTransferAcceptanceCheckInternal(operator, _uniquettes[hash].owner, to, _asSingletonArrayPrivate(id), _asSingletonArrayPrivate(1), data);
 
         // Pay the seller, pay the protocol, move the collateral to Vault
         payable(_treasury).transfer(protocolFeeAmount);
-        emit ProtocolFeePaid(operator, uniquette.owner, to, id, protocolFeeAmount);
+        emit ProtocolFeePaid(operator, _uniquettes[hash].owner, to, id, protocolFeeAmount);
 
         payable(_vault).transfer(additionalCollateral);
-        emit CollateralIncreased(operator, uniquette.owner, to, id, additionalCollateral);
+        emit CollateralIncreased(operator, _uniquettes[hash].owner, to, id, additionalCollateral);
 
         payable(address(saleAmountReceiver)).transfer(saleReceivableAmount);
+    }
+
+    function _beforeTokenTransfer(address operator, address from, address to, uint256[] memory ids, uint256[] memory amounts, bytes memory data) internal virtual override(ERC1155, ERC1155Pausable) {
+        for (uint256 i = 0; i < ids.length; ++i) {
+            require(
+            // Transfers must be either on fungible tokens (UNQ)
+                ids[i] == FUNGIBLE_TOKEN_ID ||
+                // or, operated by marketer contract on non-fungible tokens (when selling on a DEX)
+                operator == _marketer ||
+                // or, operated by approver contract on non-fungible tokens (when approving a submission)
+                operator == _approver ||
+                // or, during safeBuy where we temporarily allow buyer to take over the uniquette
+                _temporaryExchangeApproval[from][operator] == true,
+                "Core: only marketer, approver or buyer can operate non-fungible token transfers"
+            );
+
+            if (ids[i] >= UNIQUETTE_TOKENS_BASE) {
+                _uniquettes[_idToHashMapping[ids[i]]].owner = to;
+            }
+        }
+
+        super._beforeTokenTransfer(operator, from, to, ids, amounts, data);
     }
 
     function _mintFungibleToken(address account, uint256 amount, bytes memory data) internal virtual {
@@ -297,16 +315,7 @@ contract Core is ERC1155, AccessControl, ERC1155Pausable, ERC1155Burnable, Reent
         _totalFungibleSupply += amount;
     }
 
-    function _doSafeBatchTransferAcceptanceCheckInternal(
-        address operator,
-        address from,
-        address to,
-        uint256[] memory ids,
-        uint256[] memory amounts,
-        bytes memory data
-    )
-        internal
-    {
+    function _doSafeBatchTransferAcceptanceCheckInternal(address operator, address from, address to, uint256[] memory ids, uint256[] memory amounts, bytes memory data) internal {
         if (to.isContract()) {
             try IERC1155Receiver(to).onERC1155BatchReceived(operator, from, ids, amounts, data) returns (bytes4 response) {
                 if (response != IERC1155Receiver(to).onERC1155BatchReceived.selector) {
