@@ -38,15 +38,19 @@ async function main() {
   await hre.run('compile');
 
   const [
-    deployer
+    deployer,
+    fakeDAO // TODO replace with a real DAO deployment
   ] = await hre.ethers.getSigners();
+  const Token = await hre.ethers.getContractFactory("Token");
   const Treasury = await hre.ethers.getContractFactory("Treasury");
   const Vault = await hre.ethers.getContractFactory("Vault");
-  const Core = await hre.ethers.getContractFactory("Core");
+  const Directory = await hre.ethers.getContractFactory("Directory");
 
-  const exp = hre.ethers.BigNumber.from("10").pow(18);
-  const initialUniquettePrice = hre.ethers.BigNumber.from("1").mul(exp); // ETH
-  const submissionPrize = hre.ethers.BigNumber.from("5000").mul(exp); // UNQ
+  console.log("[-] Deploying Token...");
+  const token = await deployContract(Token, [
+    "Unique Directory Governance Tokens",
+    "UNQ",
+  ]);
 
   console.log("[-] Deploying Treasury...");
   const treasury = await deployContract(Treasury, [
@@ -58,10 +62,13 @@ async function main() {
     deployer.address // releaser
   ]);
 
-  console.log("[-] Deploying Core...");
-  const core = await deployContract(Core, [
+  console.log("[-] Deploying Directory...");
+  const directory = await deployContract(Directory, [
+    "Unique Directory NFT Uniquettes",
+    "UQT",
     "ipfs://",
     process.env.FUNGIBLE_TOKEN_METADATA_HASH,
+    token.address,    // token
     vault.address,    // vault
     treasury.address, // treasury
     deployer.address, // approver
@@ -76,6 +83,13 @@ async function main() {
       1000,        // maxPriceIncrease: 10%
     ]
   ]);
+
+  console.log("[-] Configuring Token...");
+  await token.grantRole(web3.utils.soliditySha3('MINTER_ROLE'), directory.address);
+  // await token.grantRole(fakeDAO.address, web3.utils.soliditySha3('PAUSER_ROLE'));
+
+  console.log("[-] Configuring Treasury...");
+  await treasury.setTokenAddress(token.address);
 }
 
 main()

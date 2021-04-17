@@ -8,21 +8,10 @@ import "./Common.sol";
 contract Vault is Common, AccessControl, IERC1155Receiver {
     bytes32 public constant RELEASER_ROLE = keccak256("RELEASER_ROLE");
 
-    address private _exchange;
-
     constructor(
-        address payable releaser,
-        address exchange
+        address uniqueDirectory
     ) {
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
-        _setupRole(RELEASER_ROLE, releaser);
-
-        _exchange = exchange;
-    }
-
-    function unlockUniquette() public {
-        require(hasRole(RELEASER_ROLE, _msgSender()), "caller is not a releaser");
-        // TODO implement
     }
 
     function onERC1155Received(
