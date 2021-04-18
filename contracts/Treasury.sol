@@ -49,9 +49,10 @@ contract Treasury is Common, AccessControl, PaymentRecipient {
             address(this),
             block.timestamp + 30
         );
-        emit BoughtBack(_msgSender(), ethAmount, amounts[0]);
+        uint256 amountBought = amounts[amounts.length - 1];
+        emit BoughtBack(_msgSender(), ethAmount, amountBought);
 
-        _tokenAddress.burn(amounts[0]);
-        emit Burnt(_msgSender(), amounts[0]);
+        _tokenAddress.burn(amountBought);
+        emit Burnt(_msgSender(), amountBought);
     }
 }
