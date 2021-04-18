@@ -51,7 +51,7 @@ describe("Directory", () => {
 
     const fakeHash = uuid();
 
-    await expect(directory.connect(userA).submitUniquette(fakeHash))
+    await expect(directory.connect(userA).uniquetteSubmit(fakeHash))
       .to.emit(directory, 'UniquetteSubmitted')
       .withArgs(userA.address, fakeHash);
   });
@@ -62,8 +62,8 @@ describe("Directory", () => {
 
     const fakeHash = uuid();
 
-    await directory.connect(userA).submitUniquette(fakeHash);
-    await expect(directory.connect(fakeApprover).approveSubmission(fakeHash))
+    await directory.connect(userA).uniquetteSubmit(fakeHash);
+    await expect(directory.connect(fakeApprover).uniquetteApprove(fakeHash))
       .to.emit(directory, 'UniquetteApproved')
       .withArgs(fakeApprover.address, userA.address, fakeHash, 1);
   });
@@ -74,8 +74,8 @@ describe("Directory", () => {
 
     const fakeHash = uuid();
 
-    await directory.connect(userA).submitUniquette(fakeHash);
-    await expect(directory.connect(fakeApprover).rejectSubmission(fakeHash))
+    await directory.connect(userA).uniquetteSubmit(fakeHash);
+    await expect(directory.connect(fakeApprover).uniquetteReject(fakeHash))
       .to.emit(directory, 'UniquetteRejected')
       .withArgs(fakeApprover.address, userA.address, fakeHash);
   });
@@ -86,8 +86,8 @@ describe("Directory", () => {
 
     const fakeHash = uuid();
 
-    await directory.connect(userA).submitUniquette(fakeHash);
-    await directory.connect(fakeApprover).approveSubmission(fakeHash);
+    await directory.connect(userA).uniquetteSubmit(fakeHash);
+    await directory.connect(fakeApprover).uniquetteApprove(fakeHash);
 
     await expect(
       await token.balanceOf(userA.address)
@@ -100,10 +100,10 @@ describe("Directory", () => {
 
     const fakeHash = uuid();
 
-    await directory.connect(userA).submitUniquette(fakeHash);
-    await directory.connect(fakeApprover).approveSubmission(fakeHash);
+    await directory.connect(userA).uniquetteSubmit(fakeHash);
+    await directory.connect(fakeApprover).uniquetteApprove(fakeHash);
     await expect(
-      await directory.connect(userB).buyUniquette(
+      await directory.connect(userB).uniquetteBuy(
         userB.address,
         1,
         {
@@ -135,11 +135,11 @@ describe("Directory", () => {
 
     const fakeHash = uuid();
 
-    await directory.connect(userA).submitUniquette(fakeHash);
-    await directory.connect(fakeApprover).approveSubmission(fakeHash);
+    await directory.connect(userA).uniquetteSubmit(fakeHash);
+    await directory.connect(fakeApprover).uniquetteApprove(fakeHash);
 
     await expect(
-      await directory.connect(userB).buyUniquette(
+      await directory.connect(userB).uniquetteBuy(
         userB.address,
         1,
         {
@@ -155,11 +155,11 @@ describe("Directory", () => {
 
     const fakeHash = uuid();
 
-    await directory.connect(userA).submitUniquette(fakeHash);
-    await directory.connect(fakeApprover).approveSubmission(fakeHash);
+    await directory.connect(userA).uniquetteSubmit(fakeHash);
+    await directory.connect(fakeApprover).uniquetteApprove(fakeHash);
 
     await expect(
-      await directory.connect(userB).buyUniquette(
+      await directory.connect(userB).uniquetteBuy(
         userB.address,
         1,
         {
@@ -175,11 +175,11 @@ describe("Directory", () => {
 
     const fakeHash = uuid();
 
-    await directory.connect(userA).submitUniquette(fakeHash);
-    await directory.connect(fakeApprover).approveSubmission(fakeHash);
+    await directory.connect(userA).uniquetteSubmit(fakeHash);
+    await directory.connect(fakeApprover).uniquetteApprove(fakeHash);
 
     await expect(
-      await directory.connect(userB).buyUniquette(
+      await directory.connect(userB).uniquetteBuy(
         userB.address,
         1,
         {
@@ -195,9 +195,9 @@ describe("Directory", () => {
 
     const fakeHash = uuid();
 
-    await directory.connect(userA).submitUniquette(fakeHash);
-    await directory.connect(fakeApprover).approveSubmission(fakeHash);
-    await directory.connect(userB).buyUniquette(
+    await directory.connect(userA).uniquetteSubmit(fakeHash);
+    await directory.connect(fakeApprover).uniquetteApprove(fakeHash);
+    await directory.connect(userB).uniquetteBuy(
       userB.address,
       1,
       {
@@ -206,7 +206,7 @@ describe("Directory", () => {
     );
 
     await expect(
-      await directory.connect(userB).putForSale(
+      await directory.connect(userB).uniquetteForSale(
         1,
         web3.utils.toWei('1.18')
       )
@@ -220,22 +220,22 @@ describe("Directory", () => {
 
     const fakeHash = uuid();
 
-    await directory.connect(userA).submitUniquette(fakeHash);
-    await directory.connect(fakeApprover).approveSubmission(fakeHash);
-    await directory.connect(userB).buyUniquette(
+    await directory.connect(userA).uniquetteSubmit(fakeHash);
+    await directory.connect(fakeApprover).uniquetteApprove(fakeHash);
+    await directory.connect(userB).uniquetteBuy(
       userB.address,
       1,
       {
         value: web3.utils.toWei('1.1') // ETH
       }
     );
-    await directory.connect(userB).putForSale(
+    await directory.connect(userB).uniquetteForSale(
       1,
       web3.utils.toWei('1.18')
     );
 
     await expect(
-      await directory.connect(userC).buyUniquette(
+      await directory.connect(userC).uniquetteBuy(
         userC.address,
         1,
         {
@@ -263,22 +263,22 @@ describe("Directory", () => {
 
     const fakeHash = uuid();
 
-    await directory.connect(userA).submitUniquette(fakeHash);
-    await directory.connect(fakeApprover).approveSubmission(fakeHash);
-    await directory.connect(userB).buyUniquette(
+    await directory.connect(userA).uniquetteSubmit(fakeHash);
+    await directory.connect(fakeApprover).uniquetteApprove(fakeHash);
+    await directory.connect(userB).uniquetteBuy(
       userB.address,
       1,
       {
         value: web3.utils.toWei('1.1') // ETH
       }
     );
-    await directory.connect(userB).putForSale(
+    await directory.connect(userB).uniquetteForSale(
       1,
       web3.utils.toWei('1.18')
     );
 
     await expect(
-      await directory.connect(userC).buyUniquette(
+      await directory.connect(userC).uniquetteBuy(
         userC.address,
         1,
         {
@@ -306,22 +306,22 @@ describe("Directory", () => {
 
     const fakeHash = uuid();
 
-    await directory.connect(userA).submitUniquette(fakeHash);
-    await directory.connect(fakeApprover).approveSubmission(fakeHash);
-    await directory.connect(userB).buyUniquette(
+    await directory.connect(userA).uniquetteSubmit(fakeHash);
+    await directory.connect(fakeApprover).uniquetteApprove(fakeHash);
+    await directory.connect(userB).uniquetteBuy(
       userB.address,
       1,
       {
         value: web3.utils.toWei('1.1') // ETH
       }
     );
-    await directory.connect(userB).putForSale(
+    await directory.connect(userB).uniquetteForSale(
       1,
       web3.utils.toWei('0.8')
     );
 
     await expect(
-      await directory.connect(userC).buyUniquette(
+      await directory.connect(userC).uniquetteBuy(
         userC.address,
         1,
         {

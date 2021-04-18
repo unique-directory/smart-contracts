@@ -169,13 +169,13 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
         return _idToHashMapping[tokenId];
     }
 
-    function getUniquetteByHash(string calldata hash) public view virtual returns (Uniquette memory) {
+    function uniquetteGetByHash(string calldata hash) public view virtual returns (Uniquette memory) {
         require(_uniquettes[hash].author != address(0), "Directory: uniquette not found");
 
         return _uniquettes[hash];
     }
 
-    function submitUniquette(string calldata hash) public nonReentrant {
+    function uniquetteSubmit(string calldata hash) public nonReentrant {
         require(_uniquettes[hash].author == address(0), "already submitted");
 
         _uniquettes[hash].author = _msgSender();
@@ -184,7 +184,7 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
         emit UniquetteSubmitted(_msgSender(), hash);
     }
 
-    function approveSubmission(string calldata hash) public nonReentrant {
+    function uniquetteApprove(string calldata hash) public nonReentrant {
         require(hasRole(APPROVER_ROLE, _msgSender()), "caller is not an approver");
         require(_uniquettes[hash].author != address(0), "submission not found");
         require(_uniquettes[hash].status == UniquetteStatus.PendingApproval, "submission not pending approval");
@@ -216,7 +216,7 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
         );
     }
 
-    function rejectSubmission(string calldata hash) public nonReentrant {
+    function uniquetteReject(string calldata hash) public nonReentrant {
         require(hasRole(APPROVER_ROLE, _msgSender()), "caller is not an approver");
         require(_uniquettes[hash].author != address(0), "submission not found");
         require(_uniquettes[hash].status == UniquetteStatus.PendingApproval, "submission not pending approval");
@@ -227,7 +227,7 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
         emit UniquetteRejected(_msgSender(), originalSubmitter, hash);
     }
 
-    function putForSale(uint256 tokenId, uint256 price) public virtual nonReentrant {
+    function uniquetteForSale(uint256 tokenId, uint256 price) public virtual nonReentrant {
         require(_exists(tokenId), "Directory: nonexistent token");
 
         string memory hash = _idToHashMapping[tokenId];
@@ -255,7 +255,7 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
         emit PutForSale(operator, owner, tokenId, hash, price);
     }
 
-    function takeOffFromSale(uint256 tokenId) public virtual nonReentrant {
+    function uniquetteNotForSale(uint256 tokenId) public virtual nonReentrant {
         require(_exists(tokenId), "Directory: nonexistent token");
 
         string memory hash = _idToHashMapping[tokenId];
@@ -275,7 +275,7 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
         emit TakeOffFromSale(operator, owner, tokenId, hash);
     }
 
-    function buyUniquette(address to, uint256 tokenId) payable public virtual nonReentrant {
+    function uniquetteBuy(address to, uint256 tokenId) payable public virtual nonReentrant {
         require(_exists(tokenId), "Directory: nonexistent token");
 
         // Check if uniquette is sellable
