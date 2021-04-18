@@ -6,8 +6,9 @@ import '@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol';
 
 import "./Common.sol";
 import "./Token.sol";
+import "./PaymentRecipient.sol";
 
-contract Treasury is Common, AccessControl {
+contract Treasury is Common, AccessControl, PaymentRecipient {
     bytes32 public constant GOVERNANCE_ROLE = keccak256("GOVERNANCE_ROLE");
 
     event BoughtBack(address initiator, uint256 ethAmount, uint256 tokensBought);

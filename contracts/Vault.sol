@@ -3,9 +3,11 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
-import "./Common.sol";
 
-contract Vault is Common, AccessControl, IERC1155Receiver {
+import "./Common.sol";
+import "./PaymentRecipient.sol";
+
+contract Vault is Common, AccessControl, IERC1155Receiver, PaymentRecipient {
     bytes32 public constant RELEASER_ROLE = keccak256("RELEASER_ROLE");
 
     constructor() {

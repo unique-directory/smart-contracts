@@ -21,12 +21,12 @@ async function deploy(fakeVault, fakeTreasury, fakeApprover, fakeMarketer) {
     fakeMarketer.address,
     [
       web3.utils.toWei('1'), // initialUniquettePrice: 1 ETH
-      4000,        // originalAuthorShare: 40%
-      1000,        // protocolFee: 10%
+      5000,        // originalAuthorShare: 40%
+      500,         // protocolFee: 5%
       web3.utils.toWei('5000'), // submissionPrize: 5000 UNQ
       1,           // currentMetadataVersion
       1,           // minMetadataVersion
-      800,         // maxPriceIncrease: 8%
+      1000,         // maxPriceIncrease: 8%
     ]
   );
 
@@ -94,7 +94,7 @@ describe("Directory", () => {
     ).to.equal(web3.utils.toWei('5000'));
   });
 
-  it("should sell a new uniquette to a buyer", async () => {
+  it.only("should sell a new uniquette to a buyer", async () => {
     const [owner, fakeVault, fakeTreasury, fakeApprover, fakeMarketer, userA, userB] = accounts;
     const { token, directory } = await deploy(fakeVault, fakeTreasury, fakeApprover, fakeMarketer);
 
@@ -118,9 +118,9 @@ describe("Directory", () => {
       userB,
     ], [
       web3.utils.toWei('0'),
-      web3.utils.toWei('0.6'),
-      web3.utils.toWei('0.1'),
-      web3.utils.toWei('0.4'),
+      web3.utils.toWei('0.55'),
+      web3.utils.toWei('0.05'),
+      web3.utils.toWei('0.5'),
       web3.utils.toWei('-1.1'),
     ]);
 
