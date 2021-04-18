@@ -34,7 +34,7 @@ contract Treasury is Common, AccessControl, PaymentRecipient {
 
     function buybackAndBurn(uint256 ethAmount, uint256 amountOutMin) public {
         require(hasRole(GOVERNANCE_ROLE, _msgSender()), "Treasury: caller is not allowed to initiate");
-        require(ethAmount > address(this).balance, "Treasury: amount is more than balance");
+        require(ethAmount >= address(this).balance, "Treasury: amount is more than balance");
         require(address(_tokenAddress) != address(0), "Treasury: token address not set yet");
 
         // Build arguments for uniswap router call

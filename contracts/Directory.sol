@@ -181,7 +181,7 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
         uint256 tokenId,
         UniquetteStatus status
     ) {
-        Uniquette uniquette = _uniquettes[hash];
+        Uniquette memory uniquette = _uniquettes[hash];
         require(uniquette.author != address(0), "Directory: uniquette not found");
 
         return (
