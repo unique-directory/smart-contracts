@@ -8,9 +8,7 @@ import "./Common.sol";
 contract Vault is Common, AccessControl, IERC1155Receiver {
     bytes32 public constant RELEASER_ROLE = keccak256("RELEASER_ROLE");
 
-    constructor(
-        address uniqueDirectory
-    ) {
+    constructor() {
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
     }
 

@@ -62,6 +62,7 @@ contract Directory is Context, AccessControlEnumerable, ERC721, ERC721Enumerable
     uint256 private _maxPriceIncrease;
 
     mapping(uint => string) internal _idToHashMapping;
+    mapping(string => uint) internal _hashToIdMapping;
     mapping(string => Uniquette) internal _uniquettes;
 
     Counters.Counter private _tokenIdTracker;
@@ -161,6 +162,20 @@ contract Directory is Context, AccessControlEnumerable, ERC721, ERC721Enumerable
     //
     // Unique directory functions
     //
+    function uniquetteIdByHash(string calldata hash) public view virtual returns (uint256) {
+        require(_uniquettes[hash].author != address(0), "Directory: uniquette not found");
+        require(_exists(_hashToIdMapping[hash]), "Directory: query for nonexistent token");
+
+        return _hashToIdMapping[hash];
+    }
+
+    function getUniquetteById(uint256 tokenId) public view virtual returns (Uniquette memory) {
+        require(_exists(tokenId), "Directory: nonexistent token");
+        require(_uniquettes[_idToHashMapping[tokenId]].author != address(0), "Directory: uniquette not found");
+
+        return _uniquettes[_idToHashMapping[tokenId]];
+    }
+
     function submitUniquette(string calldata hash) public nonReentrant {
         require(_uniquettes[hash].author == address(0), "already submitted");
 
@@ -188,6 +203,7 @@ contract Directory is Context, AccessControlEnumerable, ERC721, ERC721Enumerable
         );
 
         _idToHashMapping[newTokenId] = hash;
+        _hashToIdMapping[hash] = newTokenId;
         _uniquettes[hash].owner = address(_vault);
         _uniquettes[hash].status = UniquetteStatus.Approved;
         _uniquettes[hash].salePrice = _initialUniquettePrice;
@@ -212,7 +228,7 @@ contract Directory is Context, AccessControlEnumerable, ERC721, ERC721Enumerable
         emit UniquetteRejected(_msgSender(), originalSubmitter, hash);
     }
 
-    function putForSale(uint256 tokenId, uint256 price) payable public virtual nonReentrant {
+    function putForSale(uint256 tokenId, uint256 price) public virtual nonReentrant {
         require(_exists(tokenId), "Directory: nonexistent token");
 
         string memory hash = _idToHashMapping[tokenId];

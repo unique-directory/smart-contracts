@@ -54,20 +54,18 @@ async function main() {
 
   console.log("[-] Deploying Treasury...");
   const treasury = await deployContract(Treasury, [
-    deployer.address // initiator
+    deployer.address, // initiator
+    process.env.UNISWAP_ROUTER_ADDR
   ]);
 
   console.log("[-] Deploying Vault...");
-  const vault = await deployContract(Vault, [
-    deployer.address // releaser
-  ]);
+  const vault = await deployContract(Vault, []);
 
   console.log("[-] Deploying Directory...");
   const directory = await deployContract(Directory, [
     "Unique Directory NFT Uniquettes",
     "UQT",
     "ipfs://",
-    process.env.FUNGIBLE_TOKEN_METADATA_HASH,
     token.address,    // token
     vault.address,    // vault
     treasury.address, // treasury
