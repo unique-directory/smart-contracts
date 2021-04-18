@@ -169,10 +169,32 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
         return _idToHashMapping[tokenId];
     }
 
-    function uniquetteGetByHash(string calldata hash) public view virtual returns (Uniquette memory) {
-        require(_uniquettes[hash].author != address(0), "Directory: uniquette not found");
+    function uniquetteGetByHash(string calldata hash) public view virtual returns
+    (
+        address author,
+        address owner,
+        uint256 collateralValue,
+        uint256 lastPurchaseAmount,
+        uint256 salePrice,
+        bool initialSale,
+        uint256 metadataVersion,
+        uint256 tokenId,
+        UniquetteStatus status
+    ) {
+        Uniquette uniquette = _uniquettes[hash];
+        require(uniquette.author != address(0), "Directory: uniquette not found");
 
-        return _uniquettes[hash];
+        return (
+            uniquette.author,
+            uniquette.owner,
+            uniquette.collateralValue,
+            uniquette.lastPurchaseAmount,
+            uniquette.salePrice,
+            uniquette.initialSale,
+            uniquette.metadataVersion,
+            uniquette.tokenId,
+            uniquette.status
+        );
     }
 
     function uniquetteSubmit(string calldata hash) public nonReentrant {
