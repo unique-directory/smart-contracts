@@ -33,6 +33,7 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
         uint256 salePrice;
         bool initialSale;
         uint256 metadataVersion;
+        uint256 tokenId;
         UniquetteStatus status;
     }
 
@@ -150,6 +151,7 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
 
     function _beforeTokenTransfer(address from, address to, uint256 tokenId) internal virtual override(ERC721Enumerable, ERC721Pausable) {
         _uniquettes[_idToHashMapping[tokenId]].owner = to;
+        super._beforeTokenTransfer(from, to, tokenId);
     }
 
     function approve(address to, uint256 tokenId) public virtual override {
@@ -200,6 +202,7 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
 
         _idToHashMapping[newTokenId] = hash;
         _uniquettes[hash].owner = address(_vault);
+        _uniquettes[hash].tokenId = newTokenId;
         _uniquettes[hash].status = UniquetteStatus.Approved;
         _uniquettes[hash].salePrice = _initialUniquettePrice;
         _uniquettes[hash].initialSale = true;
