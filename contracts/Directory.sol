@@ -15,9 +15,7 @@ import "./Token.sol";
 import "./Vault.sol";
 import "./Treasury.sol";
 
-import "hardhat/console.sol";
-
-contract Directory is Context, AccessControlEnumerable, ERC721, ERC721Enumerable, ERC721Pausable, ReentrancyGuard {
+contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721Pausable, ReentrancyGuard {
     using Address for address;
     using Counters for Counters.Counter;
 
@@ -61,8 +59,7 @@ contract Directory is Context, AccessControlEnumerable, ERC721, ERC721Enumerable
     uint256 private _minMetadataVersion;
     uint256 private _maxPriceIncrease;
 
-    mapping(uint => string) internal _idToHashMapping;
-    mapping(string => uint) internal _hashToIdMapping;
+    mapping(uint256 => string) internal _idToHashMapping;
     mapping(string => Uniquette) internal _uniquettes;
 
     Counters.Counter private _tokenIdTracker;
@@ -151,7 +148,7 @@ contract Directory is Context, AccessControlEnumerable, ERC721, ERC721Enumerable
         return (getApproved(tokenId) == spender || ERC721.isApprovedForAll(owner, spender));
     }
 
-    function _beforeTokenTransfer(address from, address to, uint256 tokenId) internal virtual override(ERC721, ERC721Enumerable, ERC721Pausable) {
+    function _beforeTokenTransfer(address from, address to, uint256 tokenId) internal virtual override(ERC721Enumerable, ERC721Pausable) {
         _uniquettes[_idToHashMapping[tokenId]].owner = to;
     }
 
@@ -162,18 +159,17 @@ contract Directory is Context, AccessControlEnumerable, ERC721, ERC721Enumerable
     //
     // Unique directory functions
     //
-    function uniquetteIdByHash(string calldata hash) public view virtual returns (uint256) {
-        require(_uniquettes[hash].author != address(0), "Directory: uniquette not found");
-        require(_exists(_hashToIdMapping[hash]), "Directory: query for nonexistent token");
-
-        return _hashToIdMapping[hash];
-    }
-
-    function getUniquetteById(uint256 tokenId) public view virtual returns (Uniquette memory) {
-        require(_exists(tokenId), "Directory: nonexistent token");
+    function uniquetteHashById(uint256 tokenId) public view virtual returns (string memory) {
+        require(_exists(tokenId), "Directory: query for nonexistent token");
         require(_uniquettes[_idToHashMapping[tokenId]].author != address(0), "Directory: uniquette not found");
 
-        return _uniquettes[_idToHashMapping[tokenId]];
+        return _idToHashMapping[tokenId];
+    }
+
+    function getUniquetteByHash(string calldata hash) public view virtual returns (Uniquette memory) {
+        require(_uniquettes[hash].author != address(0), "Directory: uniquette not found");
+
+        return _uniquettes[hash];
     }
 
     function submitUniquette(string calldata hash) public nonReentrant {
@@ -203,7 +199,6 @@ contract Directory is Context, AccessControlEnumerable, ERC721, ERC721Enumerable
         );
 
         _idToHashMapping[newTokenId] = hash;
-        _hashToIdMapping[hash] = newTokenId;
         _uniquettes[hash].owner = address(_vault);
         _uniquettes[hash].status = UniquetteStatus.Approved;
         _uniquettes[hash].salePrice = _initialUniquettePrice;
