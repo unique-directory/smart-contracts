@@ -44,6 +44,7 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
     event ProtocolFeePaid(address indexed operator, address seller, address indexed buyer, uint256 indexed tokenId, uint256 feePaid);
     event CollateralIncreased(address indexed operator, address seller, address indexed buyer, uint256 indexed tokenId, uint256 additionalCollateral);
     event PutForSale(address indexed operator, address indexed seller, uint256 indexed tokenId, string hash, uint256 price);
+    event TakeOffFromSale(address indexed operator, address indexed seller, uint256 indexed tokenId, string hash);
 
     string private _tokensBaseURI;
     Token private _token;
@@ -254,6 +255,26 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
         emit PutForSale(operator, owner, tokenId, hash, price);
     }
 
+    function takeOffFromSale(uint256 tokenId) public virtual nonReentrant {
+        require(_exists(tokenId), "Directory: nonexistent token");
+
+        string memory hash = _idToHashMapping[tokenId];
+        require(_uniquettes[hash].author != address(0), "Directory: uniquette does not exist");
+        require(_uniquettes[hash].status == UniquetteStatus.Approved, "Directory: uniquette is not approved");
+
+        address operator = _msgSender();
+        address owner = _uniquettes[hash].owner;
+
+        require(
+            owner == _msgSender() || isApprovedForAll(owner, _msgSender()),
+            'Directory: caller is not owner nor approved'
+        );
+
+        _uniquettes[hash].salePrice = 0;
+
+        emit TakeOffFromSale(operator, owner, tokenId, hash);
+    }
+
     function buyUniquette(address to, uint256 tokenId) payable public virtual nonReentrant {
         require(_exists(tokenId), "Directory: nonexistent token");
 
@@ -292,6 +313,9 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
 
         // Remember last amount this uniquette was sold for
         _uniquettes[hash].lastPurchaseAmount = msg.value;
+
+        // Remove from being on sale
+        _uniquettes[hash].salePrice = 0;
 
         // Transfer ownership of uniquette in ERC-721 fashion
         _approve(operator, tokenId);
