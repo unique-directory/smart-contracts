@@ -14,14 +14,13 @@ import "./Common.sol";
 import "./Token.sol";
 import "./Vault.sol";
 import "./Treasury.sol";
+import "./Marketer.sol";
 
 contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721Pausable, ReentrancyGuard {
     using Address for address;
     using Counters for Counters.Counter;
 
-    bytes32 public constant GOVERNANCE_ROLE = keccak256("GOVERNANCE_ROLE");
-    bytes32 public constant APPROVER_ROLE = keccak256("APPROVER_ROLE");
-    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
+    bytes32 public constant GOVERNOR_ROLE = keccak256("GOVERNOR_ROLE");
 
     enum UniquetteStatus { PendingApproval, PendingUpgrade, Approved }
 
@@ -54,8 +53,7 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
     Token private _token;
     Vault private _vault;
     Treasury private _treasury;
-    address payable private _approver;
-    address payable private _marketer;
+    Marketer private _marketer;
 
     uint256 private _initialUniquettePrice;
     uint256 private _originalAuthorShare;
@@ -79,7 +77,6 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
         address payable token,
         address payable vault,
         address payable treasury,
-        address payable approver,
         address payable marketer,
         uint256[9] memory uints
     ) ERC721(name, symbol) {
@@ -87,8 +84,7 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
         _token = Token(token);
         _vault = Vault(vault);
         _treasury = Treasury(treasury);
-        _approver = approver;
-        _marketer = marketer;
+        _marketer = Marketer(marketer);
 
         _initialUniquettePrice = uints[0];
         _originalAuthorShare = uints[1];
@@ -101,21 +97,85 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
         _maxPriceIncrease  = uints[8];
 
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
-        _setupRole(APPROVER_ROLE, approver);
+        _setupRole(GOVERNOR_ROLE, _msgSender());
     }
 
-    function pause() public virtual {
-        require(hasRole(PAUSER_ROLE, _msgSender()), "must have pauser role");
+    //
+    // Modifiers
+    //
+    modifier isGovernor() {
+        require(hasRole(GOVERNOR_ROLE, _msgSender()), "Directory: caller is not governor");
+        _;
+    }
+
+    //
+    // Generic and standard functions
+    //
+    function supportsInterface(bytes4 interfaceId) public view virtual override(AccessControlEnumerable, ERC721, ERC721Enumerable) returns (bool) {
+        return super.supportsInterface(interfaceId);
+    }
+
+    //
+    // Admin functions
+    //
+    function pause() isGovernor() public virtual {
         _pause();
     }
 
-    function unpause() public virtual {
-        require(hasRole(PAUSER_ROLE, _msgSender()), "must have pauser role");
+    function unpause() isGovernor() public virtual {
         _unpause();
     }
 
-    function supportsInterface(bytes4 interfaceId) public view virtual override(AccessControlEnumerable, ERC721, ERC721Enumerable) returns (bool) {
-        return super.supportsInterface(interfaceId);
+    function setTokenAddress(address payable newAddress) isGovernor() public {
+        _token = Token(newAddress);
+    }
+
+    function setVaultAddress(address payable newAddress) isGovernor() public {
+        _vault = Vault(newAddress);
+    }
+
+    function setTreasuryAddress(address payable newAddress) isGovernor() public {
+        _treasury = Treasury(newAddress);
+    }
+
+    function setMarketerAddress(address payable newAddress) isGovernor() public {
+        _marketer = Marketer(newAddress);
+    }
+
+    function setInitialUniquettePrice(uint256 newValue) isGovernor() public {
+        _initialUniquettePrice = newValue;
+    }
+
+    function setOriginalAuthorShare(uint256 newValue) isGovernor() public {
+        _originalAuthorShare = newValue;
+    }
+
+    function setProtocolFee(uint256 newValue) isGovernor() public {
+        _protocolFee = newValue;
+    }
+
+    function setSubmissionPrize(uint256 newValue) isGovernor() public {
+        _submissionPrize = newValue;
+    }
+
+    function setSubmissionCollateral(uint256 newValue) isGovernor() public {
+        _submissionCollateral = newValue;
+    }
+
+    function setFirstSaleDeadline(uint256 newValue) isGovernor() public {
+        _firstSaleDeadline = newValue;
+    }
+
+    function setCurrentMetadataVersion(uint256 newValue) isGovernor() public {
+        _currentMetadataVersion = newValue;
+    }
+
+    function setMinMetadataVersion(uint256 newValue) isGovernor() public {
+        _minMetadataVersion = newValue;
+    }
+
+    function setMaxPriceIncrease(uint256 newValue) isGovernor() public {
+        _maxPriceIncrease = newValue;
     }
 
     //
@@ -127,11 +187,7 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
         return string(abi.encodePacked(_tokensBaseURI, _idToHashMapping[tokenId]));
     }
 
-    function burn(uint256 tokenId) public virtual {
-        require(
-            hasRole(GOVERNANCE_ROLE, _msgSender()),
-            "Directory: only governance can burn uniquettes"
-        );
+    function burn(uint256 tokenId) isGovernor() public virtual {
         Uniquette memory uniquette = _uniquettes[_idToHashMapping[tokenId]];
         require(
             // Either it must be owned by Vault which means it's liquidated and currently locked in Vault
@@ -144,12 +200,7 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
         _burn(tokenId);
     }
 
-    function batchBurn(uint256[] calldata tokenIds) public virtual {
-        require(
-            hasRole(GOVERNANCE_ROLE, _msgSender()),
-            "Directory: only governance can burn uniquettes"
-        );
-
+    function batchBurn(uint256[] calldata tokenIds) isGovernor() public virtual {
         for (uint256 i = 0; i < tokenIds.length; ++i) {
             uint256 id = tokenIds[i];
             this.burn(id);
@@ -158,10 +209,10 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
 
     function isApprovedForAll(address account, address operator) public view virtual override returns (bool) {
         return (
-            // Transfers must be either operated by marketer contract (when selling on an exchange)
-            operator == _marketer ||
-            // or, operated by approver contract (when approving a submission)
-            operator == _approver ||
+            // Transfers must be either operated by governor (when approving a submission)
+            hasRole(GOVERNOR_ROLE, operator) ||
+            // or, operated by marketer contract (when selling on an exchange)
+            operator == address(_marketer) ||
             // or, operated by vault contract (when liquidating a uniquette)
             operator == address(_vault) ||
             // or, operator is approved during buy operation
@@ -190,7 +241,7 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
     }
 
     //
-    // Unique directory functions
+    // Unique functions
     //
     function uniquetteHashById(uint256 tokenId) public view virtual returns (string memory) {
         require(_exists(tokenId), "Directory: query for nonexistent token");
@@ -207,9 +258,9 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
     }
 
     function uniquetteSubmit(string calldata hash, uint256 metadataVersion) public payable nonReentrant {
-        require(_uniquettes[hash].author == address(0), "already submitted");
-        require(msg.value == _submissionCollateral, "exact collateral value required not less not more");
-        require(metadataVersion == _currentMetadataVersion, "metadata version is not supported");
+        require(_uniquettes[hash].author == address(0), "Directory: already submitted");
+        require(msg.value == _submissionCollateral, "Directory: exact collateral value required not less not more");
+        require(metadataVersion == _currentMetadataVersion, "Directory: metadata version is not current, please upgrade");
 
         _uniquettes[hash].author = _msgSender();
         _uniquettes[hash].metadataVersion = metadataVersion;
@@ -221,10 +272,10 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
         emit UniquetteSubmitted(_msgSender(), hash, msg.value);
     }
 
-    function uniquetteApprove(string calldata hash) public nonReentrant {
-        require(hasRole(APPROVER_ROLE, _msgSender()), "caller is not an approver");
-        require(_uniquettes[hash].author != address(0), "submission not found");
-        require(_uniquettes[hash].status == UniquetteStatus.PendingApproval, "submission not pending approval");
+    function uniquetteApprove(string calldata hash) isGovernor() public nonReentrant {
+        require(_uniquettes[hash].author != address(0), "Directory: submission not found");
+        require(_uniquettes[hash].status == UniquetteStatus.PendingApproval, "Directory: submission not pending approval");
+        require(_uniquettes[hash].metadataVersion == _currentMetadataVersion, "Directory: metadata version is not current, must be upgraded");
 
         _tokenIdTracker.increment();
         uint256 newTokenId = _tokenIdTracker.current();
@@ -251,10 +302,9 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
         );
     }
 
-    function uniquetteReject(string calldata hash) public nonReentrant {
-        require(hasRole(APPROVER_ROLE, _msgSender()), "caller is not an approver");
-        require(_uniquettes[hash].author != address(0), "submission not found");
-        require(_uniquettes[hash].status == UniquetteStatus.PendingApproval, "submission not pending approval");
+    function uniquetteReject(string calldata hash) isGovernor() public nonReentrant {
+        require(_uniquettes[hash].author != address(0), "Directory: submission not found");
+        require(_uniquettes[hash].status == UniquetteStatus.PendingApproval, "Directory: submission not pending approval");
 
         address originalSubmitter = _uniquettes[hash].author;
         uint256 submitCollateral = _uniquettes[hash].submitCollateral;
@@ -272,6 +322,7 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
         string memory hash = _idToHashMapping[tokenId];
         require(_uniquettes[hash].author != address(0), "Directory: uniquette does not exist");
         require(_uniquettes[hash].status == UniquetteStatus.Approved, "Directory: uniquette is not approved");
+        require(_uniquettes[hash].metadataVersion >= _minMetadataVersion, "Directory: metadata version is too old, please upgrade");
 
         address operator = _msgSender();
         address owner = _uniquettes[hash].owner;
@@ -324,6 +375,7 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
         require(_uniquettes[hash].author != address(0), "Directory: uniquette does not exist");
         require(_uniquettes[hash].status == UniquetteStatus.Approved, "Directory: uniquette not approved");
         require(_uniquettes[hash].salePrice > 0 , "Directory: uniquette not for sale");
+        require(_uniquettes[hash].metadataVersion >= _minMetadataVersion, "Directory: metadata version is too old, must be upgraded");
 
         address operator = _msgSender();
 

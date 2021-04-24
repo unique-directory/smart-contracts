@@ -2,7 +2,7 @@ const { expect } = require("chai");
 const { v4: uuid } = require("uuid");
 const web3 = require("web3");
 
-async function deploy(fakeVault, fakeTreasury, fakeApprover, fakeMarketer) {
+async function deploy(fakeVault, fakeTreasury, fakeMarketer) {
   const Token = await ethers.getContractFactory("Token");
   const token = await Token.deploy(
     "Unique Directory Governance Tokens",
@@ -17,7 +17,6 @@ async function deploy(fakeVault, fakeTreasury, fakeApprover, fakeMarketer) {
     token.address,
     fakeVault.address,
     fakeTreasury.address,
-    fakeApprover.address,
     fakeMarketer.address,
     [
       web3.utils.toWei('1'), // initialUniquettePrice: 1 ETH
@@ -48,8 +47,8 @@ describe("Directory", () => {
   });
 
   it("should submit a new uniquette", async () => {
-    const [owner, fakeVault, fakeTreasury, fakeApprover, fakeMarketer, userA] = accounts;
-    const { directory } = await deploy(fakeVault, fakeTreasury, fakeApprover, fakeMarketer);
+    const [governor, fakeVault, fakeTreasury, fakeMarketer, userA] = accounts;
+    const { directory } = await deploy(fakeVault, fakeTreasury, fakeMarketer);
 
     const fakeHash = uuid();
 
@@ -67,8 +66,8 @@ describe("Directory", () => {
   });
 
   it("should approve a uniquette submission", async () => {
-    const [owner, fakeVault, fakeTreasury, fakeApprover, fakeMarketer, userA] = accounts;
-    const { directory } = await deploy(fakeVault, fakeTreasury, fakeApprover, fakeMarketer);
+    const [governor, fakeVault, fakeTreasury, fakeMarketer, userA] = accounts;
+    const { directory } = await deploy(fakeVault, fakeTreasury, fakeMarketer);
 
     const fakeHash = uuid();
 
@@ -79,14 +78,14 @@ describe("Directory", () => {
         value: web3.utils.toWei('0.1') // ETH
       }
     );
-    await expect(directory.connect(fakeApprover).uniquetteApprove(fakeHash))
+    await expect(directory.connect(governor).uniquetteApprove(fakeHash))
       .to.emit(directory, 'UniquetteApproved')
-      .withArgs(fakeApprover.address, userA.address, fakeHash, 1);
+      .withArgs(governor.address, userA.address, fakeHash, 1);
   });
 
   it("should reject a uniquette submission", async () => {
-    const [owner, fakeVault, fakeTreasury, fakeApprover, fakeMarketer, userA] = accounts;
-    const { directory } = await deploy(fakeVault, fakeTreasury, fakeApprover, fakeMarketer);
+    const [governor, fakeVault, fakeTreasury, fakeMarketer, userA] = accounts;
+    const { directory } = await deploy(fakeVault, fakeTreasury, fakeMarketer);
 
     const fakeHash = uuid();
 
@@ -97,14 +96,14 @@ describe("Directory", () => {
         value: web3.utils.toWei('0.1') // ETH
       }
     );
-    await expect(directory.connect(fakeApprover).uniquetteReject(fakeHash))
+    await expect(directory.connect(governor).uniquetteReject(fakeHash))
       .to.emit(directory, 'UniquetteRejected')
-      .withArgs(fakeApprover.address, userA.address, fakeHash);
+      .withArgs(governor.address, userA.address, fakeHash);
   });
 
   it("should not reward original author on approval", async () => {
-    const [owner, fakeVault, fakeTreasury, fakeApprover, fakeMarketer, userA] = accounts;
-    const { token, directory } = await deploy(fakeVault, fakeTreasury, fakeApprover, fakeMarketer);
+    const [governor, fakeVault, fakeTreasury, fakeMarketer, userA] = accounts;
+    const { token, directory } = await deploy(fakeVault, fakeTreasury, fakeMarketer);
 
     const fakeHash = uuid();
 
@@ -115,7 +114,7 @@ describe("Directory", () => {
         value: web3.utils.toWei('0.1') // ETH
       }
     );
-    await directory.connect(fakeApprover).uniquetteApprove(fakeHash);
+    await directory.connect(governor).uniquetteApprove(fakeHash);
 
     await expect(
       await token.balanceOf(userA.address)
@@ -123,8 +122,8 @@ describe("Directory", () => {
   });
 
   it("should sell a new uniquette to a buyer and reward original author", async () => {
-    const [owner, fakeVault, fakeTreasury, fakeApprover, fakeMarketer, userA, userB] = accounts;
-    const { token, directory } = await deploy(fakeVault, fakeTreasury, fakeApprover, fakeMarketer);
+    const [governor, fakeVault, fakeTreasury, fakeMarketer, userA, userB] = accounts;
+    const { token, directory } = await deploy(fakeVault, fakeTreasury, fakeMarketer);
 
     const fakeHash = uuid();
 
@@ -135,7 +134,7 @@ describe("Directory", () => {
         value: web3.utils.toWei('0.1') // ETH
       }
     );
-    await directory.connect(fakeApprover).uniquetteApprove(fakeHash);
+    await directory.connect(governor).uniquetteApprove(fakeHash);
     await expect(
       await directory.connect(userB).uniquetteBuy(
         userB.address,
@@ -167,8 +166,8 @@ describe("Directory", () => {
   });
 
   it("should pay protocol fee to treasury on first sale", async () => {
-    const [owner, fakeVault, fakeTreasury, fakeApprover, fakeMarketer, userA, userB] = accounts;
-    const { token, directory } = await deploy(fakeVault, fakeTreasury, fakeApprover, fakeMarketer);
+    const [governor, fakeVault, fakeTreasury, fakeMarketer, userA, userB] = accounts;
+    const { token, directory } = await deploy(fakeVault, fakeTreasury, fakeMarketer);
 
     const fakeHash = uuid();
 
@@ -179,7 +178,7 @@ describe("Directory", () => {
         value: web3.utils.toWei('0.1') // ETH
       }
     );
-    await directory.connect(fakeApprover).uniquetteApprove(fakeHash);
+    await directory.connect(governor).uniquetteApprove(fakeHash);
 
     await expect(
       await directory.connect(userB).uniquetteBuy(
@@ -193,8 +192,8 @@ describe("Directory", () => {
   });
 
   it("should transfer additional payment as collateral to vault on first sale", async () => {
-    const [owner, fakeVault, fakeTreasury, fakeApprover, fakeMarketer, userA, userB] = accounts;
-    const { token, directory } = await deploy(fakeVault, fakeTreasury, fakeApprover, fakeMarketer);
+    const [governor, fakeVault, fakeTreasury, fakeMarketer, userA, userB] = accounts;
+    const { token, directory } = await deploy(fakeVault, fakeTreasury, fakeMarketer);
 
     const fakeHash = uuid();
 
@@ -205,7 +204,7 @@ describe("Directory", () => {
         value: web3.utils.toWei('0.1') // ETH
       }
     );
-    await directory.connect(fakeApprover).uniquetteApprove(fakeHash);
+    await directory.connect(governor).uniquetteApprove(fakeHash);
 
     await expect(
       await directory.connect(userB).uniquetteBuy(
@@ -219,8 +218,8 @@ describe("Directory", () => {
   });
 
   it("should pay the original author based on configured share on first sale", async () => {
-    const [owner, fakeVault, fakeTreasury, fakeApprover, fakeMarketer, userA, userB] = accounts;
-    const { token, directory } = await deploy(fakeVault, fakeTreasury, fakeApprover, fakeMarketer);
+    const [governor, fakeVault, fakeTreasury, fakeMarketer, userA, userB] = accounts;
+    const { token, directory } = await deploy(fakeVault, fakeTreasury, fakeMarketer);
 
     const fakeHash = uuid();
 
@@ -231,7 +230,7 @@ describe("Directory", () => {
         value: web3.utils.toWei('0.1') // ETH
       }
     );
-    await directory.connect(fakeApprover).uniquetteApprove(fakeHash);
+    await directory.connect(governor).uniquetteApprove(fakeHash);
 
     await expect(
       await directory.connect(userB).uniquetteBuy(
@@ -245,8 +244,8 @@ describe("Directory", () => {
   });
 
   it("should put on sale based on desired price", async () => {
-    const [owner, fakeVault, fakeTreasury, fakeApprover, fakeMarketer, userA, userB] = accounts;
-    const { token, directory } = await deploy(fakeVault, fakeTreasury, fakeApprover, fakeMarketer);
+    const [governor, fakeVault, fakeTreasury, fakeMarketer, userA, userB] = accounts;
+    const { token, directory } = await deploy(fakeVault, fakeTreasury, fakeMarketer);
 
     const fakeHash = uuid();
 
@@ -257,7 +256,7 @@ describe("Directory", () => {
         value: web3.utils.toWei('0.1') // ETH
       }
     );
-    await directory.connect(fakeApprover).uniquetteApprove(fakeHash);
+    await directory.connect(governor).uniquetteApprove(fakeHash);
     await directory.connect(userB).uniquetteBuy(
       userB.address,
       1,
@@ -276,8 +275,8 @@ describe("Directory", () => {
   });
 
   it("should buy with same amount as sales price on secondary sales", async () => {
-    const [owner, fakeVault, fakeTreasury, fakeApprover, fakeMarketer, userA, userB, userC] = accounts;
-    const { token, directory } = await deploy(fakeVault, fakeTreasury, fakeApprover, fakeMarketer);
+    const [governor, fakeVault, fakeTreasury, fakeMarketer, userA, userB, userC] = accounts;
+    const { token, directory } = await deploy(fakeVault, fakeTreasury, fakeMarketer);
 
     const fakeHash = uuid();
 
@@ -288,7 +287,7 @@ describe("Directory", () => {
         value: web3.utils.toWei('0.1') // ETH
       }
     );
-    await directory.connect(fakeApprover).uniquetteApprove(fakeHash);
+    await directory.connect(governor).uniquetteApprove(fakeHash);
     await directory.connect(userB).uniquetteBuy(
       userB.address,
       1,
@@ -310,7 +309,7 @@ describe("Directory", () => {
         }
       )
     ).to.changeEtherBalances([
-      owner, directory,
+      governor, directory,
       fakeVault, fakeTreasury,
       userA,
       userB,
@@ -325,8 +324,8 @@ describe("Directory", () => {
   });
 
   it("should buy with higher amount than sales price on secondary sales", async () => {
-    const [owner, fakeVault, fakeTreasury, fakeApprover, fakeMarketer, userA, userB, userC] = accounts;
-    const { token, directory } = await deploy(fakeVault, fakeTreasury, fakeApprover, fakeMarketer);
+    const [governor, fakeVault, fakeTreasury, fakeMarketer, userA, userB, userC] = accounts;
+    const { token, directory } = await deploy(fakeVault, fakeTreasury, fakeMarketer);
 
     const fakeHash = uuid();
 
@@ -337,7 +336,7 @@ describe("Directory", () => {
         value: web3.utils.toWei('0.1') // ETH
       }
     );
-    await directory.connect(fakeApprover).uniquetteApprove(fakeHash);
+    await directory.connect(governor).uniquetteApprove(fakeHash);
     await directory.connect(userB).uniquetteBuy(
       userB.address,
       1,
@@ -359,7 +358,7 @@ describe("Directory", () => {
         }
       )
     ).to.changeEtherBalances([
-      owner, directory,
+      governor, directory,
       fakeVault, fakeTreasury,
       userA,
       userB,
@@ -374,8 +373,8 @@ describe("Directory", () => {
   });
 
   it("should sell for price lower than last purchase but higher than collateral", async () => {
-    const [owner, fakeVault, fakeTreasury, fakeApprover, fakeMarketer, userA, userB, userC] = accounts;
-    const { token, directory } = await deploy(fakeVault, fakeTreasury, fakeApprover, fakeMarketer);
+    const [governor, fakeVault, fakeTreasury, fakeMarketer, userA, userB, userC] = accounts;
+    const { token, directory } = await deploy(fakeVault, fakeTreasury, fakeMarketer);
 
     const fakeHash = uuid();
 
@@ -386,7 +385,7 @@ describe("Directory", () => {
         value: web3.utils.toWei('0.1') // ETH
       }
     );
-    await directory.connect(fakeApprover).uniquetteApprove(fakeHash);
+    await directory.connect(governor).uniquetteApprove(fakeHash);
     await directory.connect(userB).uniquetteBuy(
       userB.address,
       1,
@@ -408,7 +407,7 @@ describe("Directory", () => {
         }
       )
     ).to.changeEtherBalances([
-      owner, directory,
+      governor, directory,
       fakeVault, fakeTreasury,
       userA,
       userB,

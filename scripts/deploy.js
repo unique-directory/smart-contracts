@@ -6,6 +6,8 @@
 const hre = require("hardhat");
 const web3 = require("web3");
 
+const verificationPromises = [];
+
 async function deployContract(contractClass, contractArguments) {
   const instance = await contractClass.deploy.apply(contractClass, contractArguments);
   await instance.deployed();
@@ -16,16 +18,18 @@ async function deployContract(contractClass, contractArguments) {
     return instance;
   }
 
-  console.log(" - waiting for 5 confirmations...");
-  await instance.deployTransaction.wait(5);
+  // Asynchronously try to verify the contract
+  verificationPromises.push((async () => {
+    console.log(" - waiting for 5 confirmations...");
+    await instance.deployTransaction.wait(5);
 
-  console.log(" - verifying contract in EtherScan...");
-  await hre.run("verify:verify", {
-    address: instance.address,
-    constructorArguments: contractArguments,
-  });
+    console.log(" - verifying contract in EtherScan...");
+    await hre.run("verify:verify", {
+      address: instance.address,
+      constructorArguments: contractArguments,
+    });
+  }));
 
-  console.log(" - contract is verified.");
   return instance;
 }
 
@@ -43,6 +47,7 @@ async function main() {
   ] = await hre.ethers.getSigners();
   const Token = await hre.ethers.getContractFactory("Token");
   const Treasury = await hre.ethers.getContractFactory("Treasury");
+  const Marketer = await hre.ethers.getContractFactory("Marketer");
   const Vault = await hre.ethers.getContractFactory("Vault");
   const Directory = await hre.ethers.getContractFactory("Directory");
 
@@ -54,9 +59,11 @@ async function main() {
 
   console.log("[-] Deploying Treasury...");
   const treasury = await deployContract(Treasury, [
-    deployer.address, // initiator
     process.env.UNISWAP_ROUTER_ADDR
   ]);
+
+  console.log("[-] Deploying Marketer...");
+  const marketer = await deployContract(Marketer, []);
 
   console.log("[-] Deploying Vault...");
   const vault = await deployContract(Vault, []);
@@ -66,11 +73,10 @@ async function main() {
     "Unique Directory NFT Uniquettes",
     "UQT",
     "ipfs://",
-    token.address,    // token
-    vault.address,    // vault
-    treasury.address, // treasury
-    deployer.address, // approver
-    deployer.address, // marketer
+    token.address,
+    vault.address,
+    treasury.address,
+    marketer.address,
     [
       web3.utils.toWei('1'), // initialUniquettePrice: 1 ETH
       5000,        // originalAuthorShare: 50%
@@ -86,10 +92,16 @@ async function main() {
 
   console.log("[-] Configuring Token...");
   await token.grantRole(web3.utils.soliditySha3('MINTER_ROLE'), directory.address);
-  // await token.grantRole(fakeDAO.address, web3.utils.soliditySha3('PAUSER_ROLE'));
 
   console.log("[-] Configuring Treasury...");
   await treasury.setTokenAddress(token.address);
+
+  console.log("[-] Configuring Marketer...");
+  await treasury.setDirectoryAddress(directory.address);
+
+  // Wait for all verification promises to finish
+  console.log("[-] Verifying all contracts in EtherScan...");
+  await Promise.allSettled(verificationPromises);
 }
 
 main()

@@ -15,62 +15,42 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import "./Common.sol";
 
 contract Token is Common, Context, AccessControlEnumerable, ERC20Burnable, ERC20Pausable, ERC20Snapshot, ERC20Permit {
+    bytes32 public constant GOVERNOR_ROLE = keccak256("GOVERNOR_ROLE");
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
-    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
 
-    /**
-     * @dev Grants `DEFAULT_ADMIN_ROLE`, `MINTER_ROLE` and `PAUSER_ROLE` to the
-     * account that deploys the contract.
-     *
-     * See {ERC20-constructor}.
-     */
     constructor(
         string memory name,
         string memory symbol
     ) ERC20(name, symbol) ERC20Permit(name) {
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
+        _setupRole(GOVERNOR_ROLE, _msgSender());
     }
 
-    /**
-     * @dev Creates `amount` new tokens for `to`.
-     *
-     * See {ERC20-_mint}.
-     *
-     * Requirements:
-     *
-     * - the caller must have the `MINTER_ROLE`.
-     */
-    function mint(address to, uint256 amount) public virtual {
-        require(hasRole(MINTER_ROLE, _msgSender()), "Token: must have minter role to mint");
-        _mint(to, amount);
+    //
+    // Modifiers
+    //
+    modifier isGovernor() {
+        require(hasRole(GOVERNOR_ROLE, _msgSender()), "Token: caller is not governor");
+        _;
     }
 
-    /**
-     * @dev Pauses all token transfers.
-     *
-     * See {ERC20Pausable} and {Pausable-_pause}.
-     *
-     * Requirements:
-     *
-     * - the caller must have the `PAUSER_ROLE`.
-     */
-    function pause() public virtual {
-        require(hasRole(PAUSER_ROLE, _msgSender()), "Token: must have pauser role to pause");
+    //
+    // Admin functions
+    //
+    function pause() isGovernor() public virtual {
         _pause();
     }
 
-    /**
-     * @dev Unpauses all token transfers.
-     *
-     * See {ERC20Pausable} and {Pausable-_unpause}.
-     *
-     * Requirements:
-     *
-     * - the caller must have the `PAUSER_ROLE`.
-     */
-    function unpause() public virtual {
-        require(hasRole(PAUSER_ROLE, _msgSender()), "Token: must have pauser role to unpause");
+    function unpause() isGovernor() public virtual {
         _unpause();
+    }
+
+    //
+    // Customized ERC-20 functions
+    //
+    function mint(address to, uint256 amount) public virtual {
+        require(hasRole(MINTER_ROLE, _msgSender()), "Token: must have minter role to mint");
+        _mint(to, amount);
     }
 
     function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual override(ERC20, ERC20Pausable, ERC20Snapshot) {

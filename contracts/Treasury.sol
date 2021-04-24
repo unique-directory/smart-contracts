@@ -9,7 +9,7 @@ import "./Token.sol";
 import "./PaymentRecipient.sol";
 
 contract Treasury is Common, AccessControl, PaymentRecipient {
-    bytes32 public constant GOVERNANCE_ROLE = keccak256("GOVERNANCE_ROLE");
+    bytes32 public constant GOVERNOR_ROLE = keccak256("GOVERNOR_ROLE");
 
     event BoughtBack(address initiator, uint256 ethAmount, uint256 tokensBought);
     event Burnt(address initiator, uint256 ethAmount);
@@ -18,22 +18,30 @@ contract Treasury is Common, AccessControl, PaymentRecipient {
     IUniswapV2Router02 private _uniswapRouter;
 
     constructor(
-        address governance,
         address payable uniswapRouter
     ) {
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
-        _setupRole(GOVERNANCE_ROLE, governance);
+        _setupRole(GOVERNOR_ROLE, _msgSender());
 
         _uniswapRouter = IUniswapV2Router02(uniswapRouter);
     }
 
-    function setTokenAddress(address tokenAddress) public {
-        require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), "Treasury: caller is not an admin");
+    //
+    // Modifiers
+    //
+    modifier isGovernor() {
+        require(hasRole(GOVERNOR_ROLE, _msgSender()), "Treasury: caller is not governor");
+        _;
+    }
+
+    //
+    // Admin functions
+    //
+    function setTokenAddress(address tokenAddress) isGovernor() public {
         _tokenAddress = Token(tokenAddress);
     }
 
-    function buybackAndBurn(uint256 ethAmount, uint256 amountOutMin) public {
-        require(hasRole(GOVERNANCE_ROLE, _msgSender()), "Treasury: caller is not allowed to initiate");
+    function buybackAndBurn(uint256 ethAmount, uint256 amountOutMin) isGovernor() public {
         require(ethAmount >= address(this).balance, "Treasury: amount is more than balance");
         require(address(_tokenAddress) != address(0), "Treasury: token address not set yet");
 
