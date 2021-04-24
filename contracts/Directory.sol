@@ -32,12 +32,15 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
         uint256 lastPurchaseAmount;
         uint256 salePrice;
         bool initialSale;
+        uint256 submissionPrize;
         uint256 metadataVersion;
         uint256 tokenId;
+        uint256 submitCollateral;
+        uint256 submitTime;
         UniquetteStatus status;
     }
 
-    event UniquetteSubmitted(address indexed submitter, string indexed hash);
+    event UniquetteSubmitted(address indexed submitter, string indexed hash, uint256 collateral);
     event UniquetteApproved(address approver, address indexed submitter, string indexed hash, uint256 indexed tokenId);
     event UniquetteRejected(address approver, address indexed submitter, string indexed hash);
     event UniquetteBought(address operator, address indexed seller, address indexed buyer, uint256 indexed tokenId);
@@ -57,6 +60,7 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
     uint256 private _originalAuthorShare;
     uint256 private _protocolFee;
     uint256 private _submissionPrize;
+    uint256 private _submissionCollateral;
     uint256 private _currentMetadataVersion;
     uint256 private _minMetadataVersion;
     uint256 private _maxPriceIncrease;
@@ -75,7 +79,7 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
         address payable treasury,
         address payable approver,
         address payable marketer,
-        uint256[7] memory uints
+        uint256[8] memory uints
     ) ERC721(name, symbol) {
         _tokensBaseURI = tokensBaseURI;
         _token = Token(token);
@@ -88,9 +92,10 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
         _originalAuthorShare = uints[1];
         _protocolFee = uints[2];
         _submissionPrize  = uints[3];
-        _currentMetadataVersion  = uints[4];
-        _minMetadataVersion  = uints[5];
-        _maxPriceIncrease  = uints[6];
+        _submissionCollateral  = uints[4];
+        _currentMetadataVersion  = uints[5];
+        _minMetadataVersion  = uints[6];
+        _maxPriceIncrease  = uints[7];
 
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
         _setupRole(APPROVER_ROLE, approver);
@@ -111,11 +116,10 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
     }
 
     // Customized ERC-721 functions:
-    //      1. To generated metadata URI based on baseURI + hash of a uniquette.
-    //      2. To return supply for both fungible and uniquette tokens (always 1).
-    //      3. To only allow burning of fungible tokens by users and still allow governance to burn a uniquette.
-    //      4. To allow Marketer contract to sell uniquettes on exchanges on behalf of the owners.
-    //      5. To allow transfers only via buying mechanism or by trusted Marketer contract.
+    //      1. To generate metadata URI based on baseURI + hash of a uniquette.
+    //      2. To only allow governance to burn a uniquette.
+    //      3. To allow Marketer contract to sell uniquettes on exchanges on behalf of the owners.
+    //      4. To allow transfers only via buying mechanism or by trusted Vault contract.
     //
     function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
         require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
@@ -138,7 +142,9 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
             operator == _marketer ||
             // or, operated by approver contract (when approving a submission)
             operator == _approver ||
-            // or, operator is temporarily approved during buy operation
+            // or, operated by vault contract (when liquidating a uniquette)
+            operator == address(_vault) ||
+            // or, operator is approved during buy operation
             super.isApprovedForAll(account, operator)
         );
     }
@@ -159,6 +165,10 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
         revert("Directory: approve not supported on uniquette transfers");
     }
 
+    function setApprovalForAll(address operator, bool approved) public virtual override {
+        revert("Directory: setApprovalForAll not supported on uniquette transfers");
+    }
+
     //
     // Unique directory functions
     //
@@ -169,41 +179,23 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
         return _idToHashMapping[tokenId];
     }
 
-    function uniquetteGetByHash(string calldata hash) public view virtual returns
-    (
-        address author,
-        address owner,
-        uint256 collateralValue,
-        uint256 lastPurchaseAmount,
-        uint256 salePrice,
-        bool initialSale,
-        uint256 metadataVersion,
-        uint256 tokenId,
-        UniquetteStatus status
-    ) {
+    function uniquetteGetByHash(string calldata hash) public view virtual returns (Uniquette memory) {
         Uniquette memory uniquette = _uniquettes[hash];
         require(uniquette.author != address(0), "Directory: uniquette not found");
 
-        return (
-            uniquette.author,
-            uniquette.owner,
-            uniquette.collateralValue,
-            uniquette.lastPurchaseAmount,
-            uniquette.salePrice,
-            uniquette.initialSale,
-            uniquette.metadataVersion,
-            uniquette.tokenId,
-            uniquette.status
-        );
+        return uniquette;
     }
 
-    function uniquetteSubmit(string calldata hash) public nonReentrant {
+    function uniquetteSubmit(string calldata hash) public payable nonReentrant {
         require(_uniquettes[hash].author == address(0), "already submitted");
+        require(msg.value != _submissionCollateral, "collateral required");
 
         _uniquettes[hash].author = _msgSender();
         _uniquettes[hash].status = UniquetteStatus.PendingApproval;
+        _uniquettes[hash].submitCollateral = msg.value;
+        _uniquettes[hash].submitTime = block.timestamp;
 
-        emit UniquetteSubmitted(_msgSender(), hash);
+        emit UniquetteSubmitted(_msgSender(), hash, msg.value);
     }
 
     function uniquetteApprove(string calldata hash) public nonReentrant {
@@ -217,18 +209,16 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
         // Send the new uniquette to Vault
         _mint(address(_vault), newTokenId);
 
-        // Compensate original author for their submission with ERC-20 tokens
-        _token.mint(
-            _uniquettes[hash].author,
-            _submissionPrize
-        );
-
         _idToHashMapping[newTokenId] = hash;
         _uniquettes[hash].owner = address(_vault);
         _uniquettes[hash].tokenId = newTokenId;
         _uniquettes[hash].status = UniquetteStatus.Approved;
         _uniquettes[hash].salePrice = _initialUniquettePrice;
         _uniquettes[hash].initialSale = true;
+        _uniquettes[hash].submissionPrize = _submissionPrize;
+
+        // Return the submit collateral to author
+        payable(address(_uniquettes[hash].author)).transfer(_uniquettes[hash].submitCollateral);
 
         emit UniquetteApproved(
             _msgSender(),
@@ -244,7 +234,11 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
         require(_uniquettes[hash].status == UniquetteStatus.PendingApproval, "submission not pending approval");
 
         address originalSubmitter = _uniquettes[hash].author;
+        uint256 submitCollateral = _uniquettes[hash].submitCollateral;
         delete _uniquettes[hash];
+
+        // Seize the submit collateral to treasury
+        payable(address(_treasury)).transfer(submitCollateral);
 
         emit UniquetteRejected(_msgSender(), originalSubmitter, hash);
     }
@@ -269,7 +263,7 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
         uint256 maxAllowedPriceByCollateral = _uniquettes[hash].collateralValue + ((_maxPriceIncrease * _uniquettes[hash].collateralValue) / 10000);
         uint256 maxAllowedPriceByLastPurchase = _uniquettes[hash].lastPurchaseAmount + ((_maxPriceIncrease * _uniquettes[hash].lastPurchaseAmount) / 10000);
 
-        require(price > minSensiblePrice, "Directory: sale price must be more than collateral");
+        require(price >= minSensiblePrice, "Directory: sale price must be equal or more than collateral");
         require(price <= maxAllowedPriceByCollateral || price <= maxAllowedPriceByLastPurchase, "Directory: sale price exceeds max allowed");
 
         _uniquettes[hash].salePrice = price;
@@ -320,10 +314,14 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
         // Find out who should be paid for the sale and how much
         uint256 saleReceivableAmount;
         address saleAmountReceiver;
+        uint256 salePrizeAmount;
+        address salePrizeReceiver;
         if (_uniquettes[hash].initialSale) {
             _uniquettes[hash].initialSale = false;
             saleReceivableAmount = _uniquettes[hash].salePrice * _originalAuthorShare / 10000;
             saleAmountReceiver = _uniquettes[hash].author;
+            salePrizeAmount = _uniquettes[hash].submissionPrize;
+            salePrizeReceiver = _uniquettes[hash].author;
         } else {
             saleReceivableAmount = _uniquettes[hash].salePrice;
             saleAmountReceiver = _uniquettes[hash].owner;
@@ -344,7 +342,7 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
         _transfer(_uniquettes[hash].owner, to, tokenId);
         emit UniquetteBought(operator, _uniquettes[hash].owner, to, tokenId);
 
-        // Pay the seller, pay the protocol, move the collateral to Vault
+        // Pay the protocol fee, move the collateral to Vault, pay the seller
         payable(address(_treasury)).transfer(protocolFeeAmount);
         emit ProtocolFeePaid(operator, _uniquettes[hash].owner, to, tokenId, protocolFeeAmount);
 
@@ -352,5 +350,13 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
         emit CollateralIncreased(operator, _uniquettes[hash].owner, to, tokenId, additionalCollateral);
 
         payable(address(saleAmountReceiver)).transfer(saleReceivableAmount);
+
+        // Compensate original author for their submission with ERC-20 tokens
+        if (salePrizeReceiver != address(0) && salePrizeAmount > 0) {
+            _token.mint(
+                salePrizeReceiver,
+                salePrizeAmount
+            );
+        }
     }
 }
