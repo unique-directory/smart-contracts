@@ -77,6 +77,7 @@ async function main() {
       500,         // protocolFee: 5%
       web3.utils.toWei('5000'), // submissionPrize: 5000 UNQ
       web3.utils.toWei('0.1'), // submissionCollateral: 0.1 ETH
+      7890000,     // firstSaleDeadline: 90 days
       1,           // currentMetadataVersion
       1,           // minMetadataVersion
       1000,        // maxPriceIncrease: 10%

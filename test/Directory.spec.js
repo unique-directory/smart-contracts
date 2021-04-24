@@ -25,6 +25,7 @@ async function deploy(fakeVault, fakeTreasury, fakeApprover, fakeMarketer) {
       500,         // protocolFee: 5%
       web3.utils.toWei('5000'), // submissionPrize: 5000 UNQ
       web3.utils.toWei('0.1'), // submissionCollateral: 0.1 ETH
+      7890000,     // firstSaleDeadline: 90 days
       1,           // currentMetadataVersion
       1,           // minMetadataVersion
       1000,        // maxPriceIncrease: 8%
@@ -55,6 +56,7 @@ describe("Directory", () => {
     await expect(
       directory.connect(userA).uniquetteSubmit(
         fakeHash,
+        1, // Schema v1
         {
           value: web3.utils.toWei('0.1') // ETH
         }
@@ -72,6 +74,7 @@ describe("Directory", () => {
 
     await directory.connect(userA).uniquetteSubmit(
       fakeHash,
+      1, // Schema v1
       {
         value: web3.utils.toWei('0.1') // ETH
       }
@@ -89,6 +92,7 @@ describe("Directory", () => {
 
     await directory.connect(userA).uniquetteSubmit(
       fakeHash,
+      1, // Schema v1
       {
         value: web3.utils.toWei('0.1') // ETH
       }
@@ -106,6 +110,7 @@ describe("Directory", () => {
 
     await directory.connect(userA).uniquetteSubmit(
       fakeHash,
+      1, // Schema v1
       {
         value: web3.utils.toWei('0.1') // ETH
       }
@@ -125,6 +130,7 @@ describe("Directory", () => {
 
     await directory.connect(userA).uniquetteSubmit(
       fakeHash,
+      1, // Schema v1
       {
         value: web3.utils.toWei('0.1') // ETH
       }
@@ -168,6 +174,7 @@ describe("Directory", () => {
 
     await directory.connect(userA).uniquetteSubmit(
       fakeHash,
+      1, // Schema v1
       {
         value: web3.utils.toWei('0.1') // ETH
       }
@@ -193,6 +200,7 @@ describe("Directory", () => {
 
     await directory.connect(userA).uniquetteSubmit(
       fakeHash,
+      1, // Schema v1
       {
         value: web3.utils.toWei('0.1') // ETH
       }
@@ -218,6 +226,7 @@ describe("Directory", () => {
 
     await directory.connect(userA).uniquetteSubmit(
       fakeHash,
+      1, // Schema v1
       {
         value: web3.utils.toWei('0.1') // ETH
       }
@@ -243,6 +252,7 @@ describe("Directory", () => {
 
     await directory.connect(userA).uniquetteSubmit(
       fakeHash,
+      1, // Schema v1
       {
         value: web3.utils.toWei('0.1') // ETH
       }
@@ -261,7 +271,7 @@ describe("Directory", () => {
         1,
         web3.utils.toWei('1.18')
       )
-    ).to.emit(directory, 'PutForSale')
+    ).to.emit(directory, 'UniquettePutForSale')
     .withArgs(userB.address, userB.address, 1, fakeHash, web3.utils.toWei('1.18'));
   });
 
@@ -273,6 +283,7 @@ describe("Directory", () => {
 
     await directory.connect(userA).uniquetteSubmit(
       fakeHash,
+      1, // Schema v1
       {
         value: web3.utils.toWei('0.1') // ETH
       }
@@ -321,6 +332,7 @@ describe("Directory", () => {
 
     await directory.connect(userA).uniquetteSubmit(
       fakeHash,
+      1, // Schema v1
       {
         value: web3.utils.toWei('0.1') // ETH
       }
@@ -369,6 +381,7 @@ describe("Directory", () => {
 
     await directory.connect(userA).uniquetteSubmit(
       fakeHash,
+      1, // Schema v1
       {
         value: web3.utils.toWei('0.1') // ETH
       }
