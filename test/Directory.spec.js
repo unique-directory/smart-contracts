@@ -21,7 +21,7 @@ async function deploy(fakeVault, fakeTreasury, fakeApprover, fakeMarketer) {
     fakeMarketer.address,
     [
       web3.utils.toWei('1'), // initialUniquettePrice: 1 ETH
-      5000,        // originalAuthorShare: 40%
+      5000,        // originalAuthorShare: 50%
       500,         // protocolFee: 5%
       web3.utils.toWei('5000'), // submissionPrize: 5000 UNQ
       web3.utils.toWei('0.1'), // submissionCollateral: 0.1 ETH
@@ -52,9 +52,16 @@ describe("Directory", () => {
 
     const fakeHash = uuid();
 
-    await expect(directory.connect(userA).uniquetteSubmit(fakeHash))
+    await expect(
+      directory.connect(userA).uniquetteSubmit(
+        fakeHash,
+        {
+          value: web3.utils.toWei('0.1') // ETH
+        }
+      )
+    )
       .to.emit(directory, 'UniquetteSubmitted')
-      .withArgs(userA.address, fakeHash);
+      .withArgs(userA.address, fakeHash, web3.utils.toWei('0.1'));
   });
 
   it("should approve a uniquette submission", async () => {
@@ -63,7 +70,12 @@ describe("Directory", () => {
 
     const fakeHash = uuid();
 
-    await directory.connect(userA).uniquetteSubmit(fakeHash);
+    await directory.connect(userA).uniquetteSubmit(
+      fakeHash,
+      {
+        value: web3.utils.toWei('0.1') // ETH
+      }
+    );
     await expect(directory.connect(fakeApprover).uniquetteApprove(fakeHash))
       .to.emit(directory, 'UniquetteApproved')
       .withArgs(fakeApprover.address, userA.address, fakeHash, 1);
@@ -75,33 +87,48 @@ describe("Directory", () => {
 
     const fakeHash = uuid();
 
-    await directory.connect(userA).uniquetteSubmit(fakeHash);
+    await directory.connect(userA).uniquetteSubmit(
+      fakeHash,
+      {
+        value: web3.utils.toWei('0.1') // ETH
+      }
+    );
     await expect(directory.connect(fakeApprover).uniquetteReject(fakeHash))
       .to.emit(directory, 'UniquetteRejected')
       .withArgs(fakeApprover.address, userA.address, fakeHash);
   });
 
-  it("should reward UNQ to original author as submission prize", async () => {
+  it("should not reward original author on approval", async () => {
     const [owner, fakeVault, fakeTreasury, fakeApprover, fakeMarketer, userA] = accounts;
     const { token, directory } = await deploy(fakeVault, fakeTreasury, fakeApprover, fakeMarketer);
 
     const fakeHash = uuid();
 
-    await directory.connect(userA).uniquetteSubmit(fakeHash);
+    await directory.connect(userA).uniquetteSubmit(
+      fakeHash,
+      {
+        value: web3.utils.toWei('0.1') // ETH
+      }
+    );
     await directory.connect(fakeApprover).uniquetteApprove(fakeHash);
 
     await expect(
       await token.balanceOf(userA.address)
-    ).to.equal(web3.utils.toWei('5000'));
+    ).to.equal(0);
   });
 
-  it.only("should sell a new uniquette to a buyer", async () => {
+  it("should sell a new uniquette to a buyer and reward original author", async () => {
     const [owner, fakeVault, fakeTreasury, fakeApprover, fakeMarketer, userA, userB] = accounts;
     const { token, directory } = await deploy(fakeVault, fakeTreasury, fakeApprover, fakeMarketer);
 
     const fakeHash = uuid();
 
-    await directory.connect(userA).uniquetteSubmit(fakeHash);
+    await directory.connect(userA).uniquetteSubmit(
+      fakeHash,
+      {
+        value: web3.utils.toWei('0.1') // ETH
+      }
+    );
     await directory.connect(fakeApprover).uniquetteApprove(fakeHash);
     await expect(
       await directory.connect(userB).uniquetteBuy(
@@ -126,6 +153,9 @@ describe("Directory", () => {
     ]);
 
     await expect(
+      await token.balanceOf(userA.address)
+    ).to.equal(web3.utils.toWei('5000'));
+    await expect(
       await directory.balanceOf(userB.address)
     ).to.equal(1);
   });
@@ -136,7 +166,12 @@ describe("Directory", () => {
 
     const fakeHash = uuid();
 
-    await directory.connect(userA).uniquetteSubmit(fakeHash);
+    await directory.connect(userA).uniquetteSubmit(
+      fakeHash,
+      {
+        value: web3.utils.toWei('0.1') // ETH
+      }
+    );
     await directory.connect(fakeApprover).uniquetteApprove(fakeHash);
 
     await expect(
@@ -147,7 +182,7 @@ describe("Directory", () => {
           value: web3.utils.toWei('1.1') // 1.1 ETH
         }
       )
-    ).to.changeEtherBalance(fakeTreasury, web3.utils.toWei('0.1'));
+    ).to.changeEtherBalance(fakeTreasury, web3.utils.toWei('0.05'));
   });
 
   it("should transfer additional payment as collateral to vault on first sale", async () => {
@@ -156,7 +191,12 @@ describe("Directory", () => {
 
     const fakeHash = uuid();
 
-    await directory.connect(userA).uniquetteSubmit(fakeHash);
+    await directory.connect(userA).uniquetteSubmit(
+      fakeHash,
+      {
+        value: web3.utils.toWei('0.1') // ETH
+      }
+    );
     await directory.connect(fakeApprover).uniquetteApprove(fakeHash);
 
     await expect(
@@ -167,7 +207,7 @@ describe("Directory", () => {
           value: web3.utils.toWei('1.1') // 1.1 ETH
         }
       )
-    ).to.changeEtherBalance(fakeVault, web3.utils.toWei('0.6'));
+    ).to.changeEtherBalance(fakeVault, web3.utils.toWei('0.55'));
   });
 
   it("should pay the original author based on configured share on first sale", async () => {
@@ -176,7 +216,12 @@ describe("Directory", () => {
 
     const fakeHash = uuid();
 
-    await directory.connect(userA).uniquetteSubmit(fakeHash);
+    await directory.connect(userA).uniquetteSubmit(
+      fakeHash,
+      {
+        value: web3.utils.toWei('0.1') // ETH
+      }
+    );
     await directory.connect(fakeApprover).uniquetteApprove(fakeHash);
 
     await expect(
@@ -187,7 +232,7 @@ describe("Directory", () => {
           value: web3.utils.toWei('1.1') // ETH
         }
       )
-    ).to.changeEtherBalance(userA, web3.utils.toWei('0.4'));
+    ).to.changeEtherBalance(userA, web3.utils.toWei('0.5'));
   });
 
   it("should put on sale based on desired price", async () => {
@@ -196,7 +241,12 @@ describe("Directory", () => {
 
     const fakeHash = uuid();
 
-    await directory.connect(userA).uniquetteSubmit(fakeHash);
+    await directory.connect(userA).uniquetteSubmit(
+      fakeHash,
+      {
+        value: web3.utils.toWei('0.1') // ETH
+      }
+    );
     await directory.connect(fakeApprover).uniquetteApprove(fakeHash);
     await directory.connect(userB).uniquetteBuy(
       userB.address,
@@ -221,7 +271,12 @@ describe("Directory", () => {
 
     const fakeHash = uuid();
 
-    await directory.connect(userA).uniquetteSubmit(fakeHash);
+    await directory.connect(userA).uniquetteSubmit(
+      fakeHash,
+      {
+        value: web3.utils.toWei('0.1') // ETH
+      }
+    );
     await directory.connect(fakeApprover).uniquetteApprove(fakeHash);
     await directory.connect(userB).uniquetteBuy(
       userB.address,
@@ -240,7 +295,7 @@ describe("Directory", () => {
         userC.address,
         1,
         {
-          value: web3.utils.toWei('1.298') // ETH
+          value: web3.utils.toWei('1.239') // ETH
         }
       )
     ).to.changeEtherBalances([
@@ -251,10 +306,10 @@ describe("Directory", () => {
       userC,
     ], [
       web3.utils.toWei('0'), web3.utils.toWei('0'),
-      web3.utils.toWei('0'), web3.utils.toWei('0.118'),
+      web3.utils.toWei('0'), web3.utils.toWei('0.059'),
       web3.utils.toWei('0'),
       web3.utils.toWei('1.18'),
-      web3.utils.toWei('-1.298'),
+      web3.utils.toWei('-1.239'),
     ]);
   });
 
@@ -264,7 +319,12 @@ describe("Directory", () => {
 
     const fakeHash = uuid();
 
-    await directory.connect(userA).uniquetteSubmit(fakeHash);
+    await directory.connect(userA).uniquetteSubmit(
+      fakeHash,
+      {
+        value: web3.utils.toWei('0.1') // ETH
+      }
+    );
     await directory.connect(fakeApprover).uniquetteApprove(fakeHash);
     await directory.connect(userB).uniquetteBuy(
       userB.address,
@@ -294,7 +354,7 @@ describe("Directory", () => {
       userC,
     ], [
       web3.utils.toWei('0'), web3.utils.toWei('0'),
-      web3.utils.toWei('2.702'), web3.utils.toWei('0.118'),
+      web3.utils.toWei('2.761'), web3.utils.toWei('0.059'),
       web3.utils.toWei('0'),
       web3.utils.toWei('1.18'),
       web3.utils.toWei('-4.0'),
@@ -307,7 +367,12 @@ describe("Directory", () => {
 
     const fakeHash = uuid();
 
-    await directory.connect(userA).uniquetteSubmit(fakeHash);
+    await directory.connect(userA).uniquetteSubmit(
+      fakeHash,
+      {
+        value: web3.utils.toWei('0.1') // ETH
+      }
+    );
     await directory.connect(fakeApprover).uniquetteApprove(fakeHash);
     await directory.connect(userB).uniquetteBuy(
       userB.address,
@@ -326,7 +391,7 @@ describe("Directory", () => {
         userC.address,
         1,
         {
-          value: web3.utils.toWei('0.88') // ETH
+          value: web3.utils.toWei('0.84') // ETH
         }
       )
     ).to.changeEtherBalances([
@@ -337,10 +402,10 @@ describe("Directory", () => {
       userC,
     ], [
       web3.utils.toWei('0'), web3.utils.toWei('0'),
-      web3.utils.toWei('0'), web3.utils.toWei('0.08'),
+      web3.utils.toWei('0'), web3.utils.toWei('0.04'),
       web3.utils.toWei('0'),
       web3.utils.toWei('0.8'),
-      web3.utils.toWei('-0.88'),
+      web3.utils.toWei('-0.84'),
     ]);
   });
 });

@@ -188,7 +188,7 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
 
     function uniquetteSubmit(string calldata hash) public payable nonReentrant {
         require(_uniquettes[hash].author == address(0), "already submitted");
-        require(msg.value != _submissionCollateral, "collateral required");
+        require(msg.value == _submissionCollateral, "exact collateral value required not less not more");
 
         _uniquettes[hash].author = _msgSender();
         _uniquettes[hash].status = UniquetteStatus.PendingApproval;
