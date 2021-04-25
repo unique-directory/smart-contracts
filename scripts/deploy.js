@@ -20,10 +20,7 @@ async function deployContract(contractClass, contractArguments) {
 
   // Asynchronously try to verify the contract
   verificationPromises.push((async () => {
-    console.log(" - waiting for 5 confirmations...");
     await instance.deployTransaction.wait(5);
-
-    console.log(" - verifying contract in EtherScan...");
     await hre.run("verify:verify", {
       address: instance.address,
       constructorArguments: contractArguments,
@@ -97,11 +94,14 @@ async function main() {
   await treasury.setTokenAddress(token.address);
 
   console.log("[-] Configuring Marketer...");
-  await treasury.setDirectoryAddress(directory.address);
+  await marketer.setDirectoryAddress(directory.address);
+
+  console.log("[-] Configuring Vault...");
+  await vault.setDirectoryAddress(directory.address);
 
   // Wait for all verification promises to finish
   console.log("[-] Verifying all contracts in EtherScan...");
-  await Promise.allSettled(verificationPromises);
+  await Promise.allSettled(verificationPromises.map(fn => fn()));
 }
 
 main()

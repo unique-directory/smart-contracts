@@ -40,9 +40,9 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
         UniquetteStatus status;
     }
 
-    event UniquetteSubmitted(address indexed submitter, string indexed hash, uint256 collateral);
-    event UniquetteApproved(address approver, address indexed submitter, string indexed hash, uint256 indexed tokenId);
-    event UniquetteRejected(address approver, address indexed submitter, string indexed hash);
+    event UniquetteSubmitted(address indexed submitter, string hash, uint256 collateral);
+    event UniquetteApproved(address approver, address indexed submitter, string hash, uint256 indexed tokenId);
+    event UniquetteRejected(address approver, address indexed submitter, string hash);
     event UniquetteBought(address operator, address indexed seller, address indexed buyer, uint256 indexed tokenId);
     event UniquetteCollateralIncreased(address indexed operator, address seller, address indexed buyer, uint256 indexed tokenId, uint256 additionalCollateral);
     event UniquettePutForSale(address indexed operator, address indexed seller, uint256 indexed tokenId, string hash, uint256 price);
@@ -224,7 +224,7 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
     function _isApprovedOrOwner(address spender, uint256 tokenId) internal view virtual override returns (bool) {
         require(_exists(tokenId), "Directory: operator query for nonexistent token");
         address owner = ERC721.ownerOf(tokenId);
-        return (getApproved(tokenId) == spender || ERC721.isApprovedForAll(owner, spender));
+        return (getApproved(tokenId) == spender || this.isApprovedForAll(owner, spender));
     }
 
     function _beforeTokenTransfer(address from, address to, uint256 tokenId) internal virtual override(ERC721Enumerable, ERC721Pausable) {

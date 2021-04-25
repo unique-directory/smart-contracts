@@ -61,7 +61,7 @@ contract Vault is Common, ReentrancyGuard, AccessControl, IERC721Receiver, Payme
 
         require(
             uniquette.owner == operator || _directory.isApprovedForAll(uniquette.owner, operator),
-            'not an owner or approved operator'
+            'Vault: not an owner or approved operator'
         );
 
         _directory.safeTransferFrom(uniquette.owner, address(this), tokenId);

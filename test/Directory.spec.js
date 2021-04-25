@@ -420,4 +420,5 @@ describe("Directory", () => {
       web3.utils.toWei('-0.84'),
     ]);
   });
+
 });
