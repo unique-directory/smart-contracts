@@ -115,6 +115,30 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
         return super.supportsInterface(interfaceId);
     }
 
+    function getParameters() public view virtual returns (
+        uint256 initialUniquettePrice,
+        uint256 originalAuthorShare,
+        uint256 protocolFee,
+        uint256 submissionPrize,
+        uint256 submissionCollateral,
+        uint256 firstSaleDeadline,
+        uint256 currentMetadataVersion,
+        uint256 minMetadataVersion,
+        uint256 maxPriceIncrease
+    ) {
+        return (
+            _initialUniquettePrice,
+            _originalAuthorShare,
+            _protocolFee,
+            _submissionPrize,
+            _submissionCollateral,
+            _firstSaleDeadline,
+            _currentMetadataVersion,
+            _minMetadataVersion,
+            _maxPriceIncrease
+        );
+    }
+
     //
     // Admin functions
     //
