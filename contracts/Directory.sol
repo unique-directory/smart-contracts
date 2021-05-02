@@ -34,7 +34,7 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
         uint256 submissionPrize;
         uint256 metadataVersion;
         uint256 tokenId;
-        uint256 submitCollateral;
+        uint256 submissionDeposit;
         uint256 submitTime;
         uint256 firstSaleDeadline;
         UniquetteStatus status;
@@ -59,7 +59,7 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
     uint256 private _originalAuthorShare;
     uint256 private _protocolFee;
     uint256 private _submissionPrize;
-    uint256 private _submissionCollateral;
+    uint256 private _submissionDeposit;
     uint256 private _firstSaleDeadline;
     uint256 private _currentMetadataVersion;
     uint256 private _minMetadataVersion;
@@ -90,7 +90,7 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
         _originalAuthorShare = uints[1];
         _protocolFee = uints[2];
         _submissionPrize  = uints[3];
-        _submissionCollateral  = uints[4];
+        _submissionDeposit  = uints[4];
         _firstSaleDeadline  = uints[5];
         _currentMetadataVersion  = uints[6];
         _minMetadataVersion  = uints[7];
@@ -120,7 +120,7 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
         uint256 originalAuthorShare,
         uint256 protocolFee,
         uint256 submissionPrize,
-        uint256 submissionCollateral,
+        uint256 submissionDeposit,
         uint256 firstSaleDeadline,
         uint256 currentMetadataVersion,
         uint256 minMetadataVersion,
@@ -131,7 +131,7 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
             _originalAuthorShare,
             _protocolFee,
             _submissionPrize,
-            _submissionCollateral,
+            _submissionDeposit,
             _firstSaleDeadline,
             _currentMetadataVersion,
             _minMetadataVersion,
@@ -183,7 +183,7 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
     }
 
     function setSubmissionCollateral(uint256 newValue) isGovernor() public {
-        _submissionCollateral = newValue;
+        _submissionDeposit = newValue;
     }
 
     function setFirstSaleDeadline(uint256 newValue) isGovernor() public {
@@ -283,13 +283,13 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
 
     function uniquetteSubmit(string calldata hash, uint256 metadataVersion) public payable nonReentrant {
         require(_uniquettes[hash].author == address(0), "Directory: already submitted");
-        require(msg.value == _submissionCollateral, "Directory: exact collateral value required not less not more");
+        require(msg.value == _submissionDeposit, "Directory: exact collateral value required not less not more");
         require(metadataVersion == _currentMetadataVersion, "Directory: metadata version is not current, please upgrade");
 
         _uniquettes[hash].author = _msgSender();
         _uniquettes[hash].metadataVersion = metadataVersion;
         _uniquettes[hash].status = UniquetteStatus.PendingApproval;
-        _uniquettes[hash].submitCollateral = msg.value;
+        _uniquettes[hash].submissionDeposit = msg.value;
         _uniquettes[hash].submitTime = block.timestamp;
         _uniquettes[hash].firstSaleDeadline = block.timestamp + _firstSaleDeadline;
 
@@ -316,7 +316,7 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
         _uniquettes[hash].submissionPrize = _submissionPrize;
 
         // Return the submit collateral to author
-        payable(address(_uniquettes[hash].author)).transfer(_uniquettes[hash].submitCollateral);
+        payable(address(_uniquettes[hash].author)).transfer(_uniquettes[hash].submissionDeposit);
 
         emit UniquetteApproved(
             _msgSender(),
@@ -331,11 +331,11 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
         require(_uniquettes[hash].status == UniquetteStatus.PendingApproval, "Directory: submission not pending approval");
 
         address originalSubmitter = _uniquettes[hash].author;
-        uint256 submitCollateral = _uniquettes[hash].submitCollateral;
+        uint256 submissionDeposit = _uniquettes[hash].submissionDeposit;
         delete _uniquettes[hash];
 
         // Seize the submit collateral to treasury
-        payable(address(_treasury)).transfer(submitCollateral);
+        payable(address(_treasury)).transfer(submissionDeposit);
 
         emit UniquetteRejected(_msgSender(), originalSubmitter, hash);
     }
