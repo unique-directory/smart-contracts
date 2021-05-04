@@ -22,7 +22,6 @@ async function deploy(fakeVault, fakeTreasury, fakeMarketer) {
       web3.utils.toWei('1'), // initialUniquettePrice: 1 ETH
       5000,        // originalAuthorShare: 50%
       500,         // protocolFee: 5%
-      web3.utils.toWei('5000'), // submissionPrize: 5000 UNQ
       web3.utils.toWei('0.1'), // submissionCollateral: 0.1 ETH
       7890000,     // firstSaleDeadline: 90 days
       1,           // currentMetadataVersion
@@ -78,7 +77,7 @@ describe("Directory", () => {
         value: web3.utils.toWei('0.1') // ETH
       }
     );
-    await expect(directory.connect(governor).uniquetteApprove(fakeHash))
+    await expect(directory.connect(governor).uniquetteApprove(fakeHash, web3.utils.toWei('5000')))
       .to.emit(directory, 'UniquetteApproved')
       .withArgs(governor.address, userA.address, fakeHash, 1);
   });
@@ -114,7 +113,7 @@ describe("Directory", () => {
         value: web3.utils.toWei('0.1') // ETH
       }
     );
-    await directory.connect(governor).uniquetteApprove(fakeHash);
+    await directory.connect(governor).uniquetteApprove(fakeHash, web3.utils.toWei('5000'));
 
     await expect(
       await token.balanceOf(userA.address)
@@ -134,7 +133,7 @@ describe("Directory", () => {
         value: web3.utils.toWei('0.1') // ETH
       }
     );
-    await directory.connect(governor).uniquetteApprove(fakeHash);
+    await directory.connect(governor).uniquetteApprove(fakeHash, web3.utils.toWei('5000'));
     await expect(
       await directory.connect(userB).uniquetteBuy(
         userB.address,
@@ -178,7 +177,7 @@ describe("Directory", () => {
         value: web3.utils.toWei('0.1') // ETH
       }
     );
-    await directory.connect(governor).uniquetteApprove(fakeHash);
+    await directory.connect(governor).uniquetteApprove(fakeHash, web3.utils.toWei('5000'));
 
     await expect(
       await directory.connect(userB).uniquetteBuy(
@@ -204,7 +203,7 @@ describe("Directory", () => {
         value: web3.utils.toWei('0.1') // ETH
       }
     );
-    await directory.connect(governor).uniquetteApprove(fakeHash);
+    await directory.connect(governor).uniquetteApprove(fakeHash, web3.utils.toWei('5000'));
 
     await expect(
       await directory.connect(userB).uniquetteBuy(
@@ -230,7 +229,7 @@ describe("Directory", () => {
         value: web3.utils.toWei('0.1') // ETH
       }
     );
-    await directory.connect(governor).uniquetteApprove(fakeHash);
+    await directory.connect(governor).uniquetteApprove(fakeHash, web3.utils.toWei('5000'));
 
     await expect(
       await directory.connect(userB).uniquetteBuy(
@@ -256,7 +255,7 @@ describe("Directory", () => {
         value: web3.utils.toWei('0.1') // ETH
       }
     );
-    await directory.connect(governor).uniquetteApprove(fakeHash);
+    await directory.connect(governor).uniquetteApprove(fakeHash, web3.utils.toWei('5000'));
     await directory.connect(userB).uniquetteBuy(
       userB.address,
       1,
@@ -287,7 +286,7 @@ describe("Directory", () => {
         value: web3.utils.toWei('0.1') // ETH
       }
     );
-    await directory.connect(governor).uniquetteApprove(fakeHash);
+    await directory.connect(governor).uniquetteApprove(fakeHash, web3.utils.toWei('5000'));
     await directory.connect(userB).uniquetteBuy(
       userB.address,
       1,
@@ -336,7 +335,7 @@ describe("Directory", () => {
         value: web3.utils.toWei('0.1') // ETH
       }
     );
-    await directory.connect(governor).uniquetteApprove(fakeHash);
+    await directory.connect(governor).uniquetteApprove(fakeHash, web3.utils.toWei('5000'));
     await directory.connect(userB).uniquetteBuy(
       userB.address,
       1,
@@ -385,7 +384,7 @@ describe("Directory", () => {
         value: web3.utils.toWei('0.1') // ETH
       }
     );
-    await directory.connect(governor).uniquetteApprove(fakeHash);
+    await directory.connect(governor).uniquetteApprove(fakeHash, web3.utils.toWei('5000'));
     await directory.connect(userB).uniquetteBuy(
       userB.address,
       1,
