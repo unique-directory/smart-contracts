@@ -78,7 +78,6 @@ async function main() {
       web3.utils.toWei('1'), // initialUniquettePrice: 1 ETH
       5000,        // originalAuthorShare: 50%
       500,         // protocolFee: 5%
-      web3.utils.toWei('5000'), // submissionPrize: 5000 UNQ
       web3.utils.toWei('0.1'), // submissionCollateral: 0.1 ETH
       7890000,     // firstSaleDeadline: 90 days
       1,           // currentMetadataVersion

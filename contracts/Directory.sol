@@ -58,7 +58,6 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
     uint256 private _initialUniquettePrice;
     uint256 private _originalAuthorShare;
     uint256 private _protocolFee;
-    uint256 private _submissionPrize;
     uint256 private _submissionDeposit;
     uint256 private _firstSaleDeadline;
     uint256 private _currentMetadataVersion;
@@ -78,7 +77,7 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
         address payable vault,
         address payable treasury,
         address payable marketer,
-        uint256[9] memory uints
+        uint256[8] memory uints
     ) ERC721(name, symbol) {
         _tokensBaseURI = tokensBaseURI;
         _token = Token(token);
@@ -89,12 +88,11 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
         _initialUniquettePrice = uints[0];
         _originalAuthorShare = uints[1];
         _protocolFee = uints[2];
-        _submissionPrize  = uints[3];
-        _submissionDeposit  = uints[4];
-        _firstSaleDeadline  = uints[5];
-        _currentMetadataVersion  = uints[6];
-        _minMetadataVersion  = uints[7];
-        _maxPriceIncrease  = uints[8];
+        _submissionDeposit  = uints[3];
+        _firstSaleDeadline  = uints[4];
+        _currentMetadataVersion  = uints[5];
+        _minMetadataVersion  = uints[6];
+        _maxPriceIncrease  = uints[7];
 
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
         _setupRole(GOVERNOR_ROLE, _msgSender());
@@ -119,7 +117,6 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
         uint256 initialUniquettePrice,
         uint256 originalAuthorShare,
         uint256 protocolFee,
-        uint256 submissionPrize,
         uint256 submissionDeposit,
         uint256 firstSaleDeadline,
         uint256 currentMetadataVersion,
@@ -130,7 +127,6 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
             _initialUniquettePrice,
             _originalAuthorShare,
             _protocolFee,
-            _submissionPrize,
             _submissionDeposit,
             _firstSaleDeadline,
             _currentMetadataVersion,
@@ -176,10 +172,6 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
 
     function setProtocolFee(uint256 newValue) isGovernor() public {
         _protocolFee = newValue;
-    }
-
-    function setSubmissionPrize(uint256 newValue) isGovernor() public {
-        _submissionPrize = newValue;
     }
 
     function setSubmissionCollateral(uint256 newValue) isGovernor() public {
@@ -296,7 +288,7 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
         emit UniquetteSubmitted(_msgSender(), hash, msg.value);
     }
 
-    function uniquetteApprove(string calldata hash) isGovernor() public nonReentrant {
+    function uniquetteApprove(string calldata hash, uint256 submissionPrize) isGovernor() public nonReentrant {
         require(_uniquettes[hash].author != address(0), "Directory: submission not found");
         require(_uniquettes[hash].status == UniquetteStatus.PendingApproval, "Directory: submission not pending approval");
         require(_uniquettes[hash].metadataVersion == _currentMetadataVersion, "Directory: metadata version is not current, must be upgraded");
@@ -313,7 +305,7 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
         _uniquettes[hash].status = UniquetteStatus.Approved;
         _uniquettes[hash].salePrice = _initialUniquettePrice;
         _uniquettes[hash].initialSale = true;
-        _uniquettes[hash].submissionPrize = _submissionPrize;
+        _uniquettes[hash].submissionPrize = submissionPrize;
 
         // Return the submit collateral to author
         payable(address(_uniquettes[hash].author)).transfer(_uniquettes[hash].submissionDeposit);
