@@ -164,6 +164,75 @@ describe("Directory", () => {
     ).to.equal(1);
   });
 
+  it("should increase the collateral when owner sends eth", async () => {
+    const [governor, fakeVault, fakeTreasury, fakeMarketer, userA, userB] = accounts;
+    const { token, directory } = await deploy(fakeVault, fakeTreasury, fakeMarketer);
+
+    const fakeHash = uuid();
+
+    await directory.connect(userA).uniquetteSubmit(
+      fakeHash,
+      1, // Schema v1
+      {
+        value: web3.utils.toWei('0.1') // ETH
+      }
+    );
+    await directory.connect(governor).uniquetteApprove(fakeHash, web3.utils.toWei('5000'));
+    await expect(
+      await directory.connect(userB).uniquetteBuy(
+        userB.address,
+        1,
+        {
+          value: web3.utils.toWei('1.1') // 1 ETH
+        }
+      )
+    ).to.changeEtherBalances([
+      directory,
+      fakeVault,
+      fakeTreasury,
+      userA,
+      userB,
+    ], [
+      web3.utils.toWei('0'),
+      web3.utils.toWei('0.55'),
+      web3.utils.toWei('0.05'),
+      web3.utils.toWei('0.5'),
+      web3.utils.toWei('-1.1'),
+    ]);
+
+    await expect(
+      await directory.connect(userB).uniquetteIncreaseCollateral(
+        1,
+        {
+          value: web3.utils.toWei('3')
+        }
+      )
+    )
+      .to.emit(directory, 'UniquetteCollateralIncreased')
+      .withArgs(userB.address, userB.address, 1, web3.utils.toWei('3'));
+
+    await expect(
+      await directory.connect(userB).uniquetteIncreaseCollateral(
+        1,
+        {
+          value: web3.utils.toWei('4')
+        }
+      )
+    ).to.changeEtherBalances([
+      directory,
+      fakeVault,
+      fakeTreasury,
+      userA,
+      userB,
+    ], [
+      web3.utils.toWei('0'),
+      web3.utils.toWei('4'),
+      web3.utils.toWei('0'),
+      web3.utils.toWei('0'),
+      web3.utils.toWei('-4'),
+    ]);
+  });
+
   it("should pay protocol fee to treasury on first sale", async () => {
     const [governor, fakeVault, fakeTreasury, fakeMarketer, userA, userB] = accounts;
     const { token, directory } = await deploy(fakeVault, fakeTreasury, fakeMarketer);
