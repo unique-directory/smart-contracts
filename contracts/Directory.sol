@@ -44,7 +44,7 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
     event UniquetteApproved(address approver, address indexed submitter, string hash, uint256 indexed tokenId);
     event UniquetteRejected(address approver, address indexed submitter, string hash);
     event UniquetteBought(address operator, address indexed seller, address indexed buyer, uint256 indexed tokenId);
-    event UniquetteCollateralIncreased(address indexed operator, address seller, address indexed buyer, uint256 indexed tokenId, uint256 additionalCollateral);
+    event UniquetteCollateralIncreased(address indexed operator, address indexed owner, uint256 indexed tokenId, uint256 additionalCollateral);
     event UniquettePutForSale(address indexed operator, address indexed seller, uint256 indexed tokenId, string hash, uint256 price);
     event UniquetteTakeOffFromSale(address indexed operator, address indexed seller, uint256 indexed tokenId, string hash);
     event ProtocolFeePaid(address indexed operator, address seller, address indexed buyer, uint256 indexed tokenId, uint256 feePaid);
@@ -438,7 +438,7 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
         emit ProtocolFeePaid(operator, _uniquettes[hash].owner, to, tokenId, protocolFeeAmount);
 
         payable(address(_vault)).transfer(additionalCollateral);
-        emit UniquetteCollateralIncreased(operator, _uniquettes[hash].owner, to, tokenId, additionalCollateral);
+        emit UniquetteCollateralIncreased(operator, to, tokenId, additionalCollateral);
 
         payable(address(saleAmountReceiver)).transfer(saleReceivableAmount);
 
@@ -449,5 +449,21 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
                 salePrizeAmount
             );
         }
+    }
+
+    function uniquetteIncreaseCollateral(uint256 tokenId) payable public virtual nonReentrant {
+        require(_exists(tokenId), "Directory: nonexistent token");
+
+        // Check if uniquette is sellable
+        string memory hash = _idToHashMapping[tokenId];
+
+        require(_uniquettes[hash].author != address(0), "Directory: uniquette does not exist");
+        require(_uniquettes[hash].status == UniquetteStatus.Approved, "Directory: uniquette not approved");
+
+        payable(address(_vault)).transfer(msg.value);
+
+        _uniquettes[hash].collateralValue += msg.value;
+
+        emit UniquetteCollateralIncreased(_msgSender(), _uniquettes[hash].owner, tokenId, msg.value);
     }
 }
