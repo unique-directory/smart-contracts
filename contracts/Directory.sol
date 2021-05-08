@@ -31,7 +31,7 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
         uint256 lastPurchaseAmount;
         uint256 salePrice;
         bool initialSale;
-        uint256 submissionPrize;
+        uint256 submissionReward;
         uint256 metadataVersion;
         uint256 tokenId;
         uint256 submissionDeposit;
@@ -288,7 +288,7 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
         emit UniquetteSubmitted(_msgSender(), hash, msg.value);
     }
 
-    function uniquetteApprove(string calldata hash, uint256 submissionPrize) isGovernor() public nonReentrant {
+    function uniquetteApprove(string calldata hash, uint256 submissionReward) isGovernor() public nonReentrant {
         require(_uniquettes[hash].author != address(0), "Directory: submission not found");
         require(_uniquettes[hash].status == UniquetteStatus.PendingApproval, "Directory: submission not pending approval");
         require(_uniquettes[hash].metadataVersion == _currentMetadataVersion, "Directory: metadata version is not current, must be upgraded");
@@ -305,7 +305,7 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
         _uniquettes[hash].status = UniquetteStatus.Approved;
         _uniquettes[hash].salePrice = _initialUniquettePrice;
         _uniquettes[hash].initialSale = true;
-        _uniquettes[hash].submissionPrize = submissionPrize;
+        _uniquettes[hash].submissionReward = submissionReward;
 
         // Return the submit collateral to author
         payable(address(_uniquettes[hash].author)).transfer(_uniquettes[hash].submissionDeposit);
@@ -411,7 +411,7 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
             _uniquettes[hash].initialSale = false;
             saleReceivableAmount = _uniquettes[hash].salePrice * _originalAuthorShare / 10000;
             saleAmountReceiver = _uniquettes[hash].author;
-            salePrizeAmount = _uniquettes[hash].submissionPrize;
+            salePrizeAmount = _uniquettes[hash].submissionReward;
             salePrizeReceiver = _uniquettes[hash].author;
         } else {
             saleReceivableAmount = _uniquettes[hash].salePrice;
