@@ -1,6 +1,9 @@
 require("@nomiclabs/hardhat-waffle");
 require('@nomiclabs/hardhat-ethers');
 require("@nomiclabs/hardhat-etherscan");
+require("@openzeppelin/hardhat-upgrades");
+require('hardhat-contract-sizer');
+
 require('dotenv').config();
 
 const INFURA_PROJECT_ID = process.env.INFURA_PROJECT_ID;
@@ -24,7 +27,7 @@ module.exports = {
     settings: {
       optimizer: {
         enabled: true,
-        runs: 1500
+        runs: 10
       }
     }
   },
@@ -51,5 +54,10 @@ module.exports = {
     // Obtain one at https://etherscan.io/
     apiKey: ETHERSCAN_API_KEY,
   },
+  contractSizer: {
+    alphaSort: false,
+    runOnCompile: true,
+    disambiguatePaths: false,
+  }
 };
 
