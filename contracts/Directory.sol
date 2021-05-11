@@ -405,14 +405,14 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
         // Find out who should be paid for the sale and how much
         uint256 saleReceivableAmount;
         address saleAmountReceiver;
-        uint256 salePrizeAmount;
-        address salePrizeReceiver;
+        uint256 saleRewardAmount;
+        address saleRewardReceiver;
         if (_uniquettes[hash].initialSale) {
             _uniquettes[hash].initialSale = false;
             saleReceivableAmount = _uniquettes[hash].salePrice * _originalAuthorShare / 10000;
             saleAmountReceiver = _uniquettes[hash].author;
-            salePrizeAmount = _uniquettes[hash].submissionReward;
-            salePrizeReceiver = _uniquettes[hash].author;
+            saleRewardAmount = _uniquettes[hash].submissionReward;
+            saleRewardReceiver = _uniquettes[hash].author;
         } else {
             saleReceivableAmount = _uniquettes[hash].salePrice;
             saleAmountReceiver = _uniquettes[hash].owner;
@@ -443,10 +443,10 @@ contract Directory is Context, AccessControlEnumerable, ERC721Enumerable, ERC721
         payable(address(saleAmountReceiver)).transfer(saleReceivableAmount);
 
         // Compensate original author for their submission with ERC-20 tokens
-        if (salePrizeReceiver != address(0) && salePrizeAmount > 0) {
+        if (saleRewardReceiver != address(0) && saleRewardAmount > 0) {
             _token.mint(
-                salePrizeReceiver,
-                salePrizeAmount
+                saleRewardReceiver,
+                saleRewardAmount
             );
         }
     }
