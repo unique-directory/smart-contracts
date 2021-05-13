@@ -41,7 +41,7 @@ contract Treasury is AccessControlUpgradeable, PaymentRecipient {
 
     function buybackAndBurn(uint256 ethAmount, uint256 amountOutMin) public isGovernor() {
         require(ethAmount >= address(this).balance, "Treasury: amount is more than balance");
-        require(address(_tokenAddress) != address(0), "Treasury: token address not set yet");
+        require(address(_tokenAddress) != address(0), "Treasury: token address not set");
 
         // Build arguments for uniswap router call
         address[] memory path = new address[](2);
