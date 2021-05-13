@@ -1,23 +1,35 @@
-//SPDX-License-Identifier: AGPL-3.0-or-later
+//SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol";
 
 import "./Common.sol";
 import "./PaymentRecipient.sol";
 import "./Directory.sol";
 
-contract Vault is Common, ReentrancyGuard, AccessControl, IERC721Receiver, PaymentRecipient {
+contract Vault is
+    Common,
+    ReentrancyGuardUpgradeable,
+    AccessControlUpgradeable,
+    IERC721ReceiverUpgradeable,
+    PaymentRecipient
+{
     bytes32 public constant GOVERNOR_ROLE = keccak256("GOVERNOR_ROLE");
 
-    event UniquetteLiquidated(address indexed operator, address indexed owner, address beneficiary, uint256 indexed tokenId, uint256 collateralValue);
+    event UniquetteLiquidated(
+        address indexed operator,
+        address indexed owner,
+        address beneficiary,
+        uint256 indexed tokenId,
+        uint256 collateralValue
+    );
 
     Directory private _directory;
 
-    constructor() {
+    function initialize() public initializer {
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
         _setupRole(GOVERNOR_ROLE, _msgSender());
     }
@@ -47,7 +59,7 @@ contract Vault is Common, ReentrancyGuard, AccessControl, IERC721Receiver, Payme
         uint256 tokenId,
         bytes calldata data
     ) external pure override returns (bytes4) {
-        return IERC721Receiver.onERC721Received.selector;
+        return IERC721ReceiverUpgradeable.onERC721Received.selector;
     }
 
     //
@@ -61,7 +73,7 @@ contract Vault is Common, ReentrancyGuard, AccessControl, IERC721Receiver, Payme
 
         require(
             uniquette.owner == operator || _directory.isApprovedForAll(uniquette.owner, operator),
-            'Vault: not an owner or approved operator'
+            "Vault: not an owner or approved operator"
         );
 
         _directory.safeTransferFrom(uniquette.owner, address(this), tokenId);

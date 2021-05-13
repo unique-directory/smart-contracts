@@ -1,6 +1,10 @@
 .env
 node_modules
 
-#Hardhat files
+# Hardhat files
+.openzeppelin
 cache
 artifacts
+solcInputs
+deployments/localhost
+

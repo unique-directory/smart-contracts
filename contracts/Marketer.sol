@@ -1,21 +1,29 @@
-//SPDX-License-Identifier: AGPL-3.0-or-later
+//SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol";
 
 import "./Common.sol";
 import "./PaymentRecipient.sol";
 import "./Directory.sol";
 
-contract Marketer is Common, ReentrancyGuard, AccessControl, IERC721Receiver, PaymentRecipient {
+contract Marketer is
+    Initializable,
+    Common,
+    ReentrancyGuardUpgradeable,
+    AccessControlUpgradeable,
+    IERC721ReceiverUpgradeable,
+    PaymentRecipient
+{
     bytes32 public constant GOVERNOR_ROLE = keccak256("GOVERNOR_ROLE");
 
     Directory private _directory;
 
-    constructor() {
+    function initialize() public initializer {
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
         _setupRole(GOVERNOR_ROLE, _msgSender());
     }
@@ -37,13 +45,13 @@ contract Marketer is Common, ReentrancyGuard, AccessControl, IERC721Receiver, Pa
         uint256 tokenId,
         bytes calldata data
     ) external pure override returns (bytes4) {
-        return IERC721Receiver.onERC721Received.selector;
+        return IERC721ReceiverUpgradeable.onERC721Received.selector;
     }
 
     //
     // Admin functions
     //
-    function setDirectoryAddress(address newAddress) isGovernor() public virtual {
+    function setDirectoryAddress(address newAddress) public virtual isGovernor() {
         _directory = Directory(newAddress);
     }
 
