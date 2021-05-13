@@ -1,5 +1,3 @@
-const hre = require('hardhat');
-
 module.exports = async ({getNamedAccounts, deployments}) => {
   const {deploy} = deployments;
   const {deployer} = await getNamedAccounts();
@@ -11,7 +9,8 @@ module.exports = async ({getNamedAccounts, deployments}) => {
     proxy: {
       owner: deployer,
       proxyContract: 'OpenZeppelinTransparentProxy',
-    }
+      methodName: 'initialize'
+    },
   });
 };
 

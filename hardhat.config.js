@@ -29,19 +29,10 @@ module.exports = {
   },
   defaultNetwork: 'hardhat',
   networks: {
-    hardhat: {
-      host: 'localhost',
-      port: 8545,
-      network_id: '*', // Match any network id
-    },
+    hardhat: {},
     rinkeby: {
       url: `https://rinkeby.infura.io/v3/${INFURA_PROJECT_ID}`,
-      accounts: DEPLOYER_PRIVATE_KEY ? [`0x${DEPLOYER_PRIVATE_KEY}`] : [],
-      network_id: '*',
-    },
-    kovan: {
-      url: `https://kovan.infura.io/v3/${INFURA_PROJECT_ID}`,
-      accounts: DEPLOYER_PRIVATE_KEY ? [`0x${DEPLOYER_PRIVATE_KEY}`] : [],
+      accounts: DEPLOYER_PRIVATE_KEY ? [`0x${DEPLOYER_PRIVATE_KEY}`] : null,
       network_id: '*',
     },
   },

@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
@@ -26,6 +26,7 @@ contract Directory is
     ReentrancyGuardUpgradeable
 {
     using AddressUpgradeable for address;
+    using AddressUpgradeable for address payable;
     using CountersUpgradeable for CountersUpgradeable.Counter;
 
     bytes32 public constant GOVERNOR_ROLE = keccak256("GOVERNOR_ROLE");
@@ -367,7 +368,7 @@ contract Directory is
         _uniquettes[hash].submissionReward = submissionReward;
 
         // Return the submit collateral to author
-        payable(address(_uniquettes[hash].author)).transfer(_uniquettes[hash].submissionDeposit);
+        payable(address(_uniquettes[hash].author)).sendValue(_uniquettes[hash].submissionDeposit);
 
         emit UniquetteApproved(_msgSender(), _uniquettes[hash].author, hash, newTokenId);
     }
@@ -384,7 +385,7 @@ contract Directory is
         delete _uniquettes[hash];
 
         // Seize the submit collateral to treasury
-        payable(address(_treasury)).transfer(submissionDeposit);
+        payable(address(_treasury)).sendValue(submissionDeposit);
 
         emit UniquetteRejected(_msgSender(), originalSubmitter, hash);
     }
@@ -502,13 +503,15 @@ contract Directory is
         emit UniquetteBought(operator, _uniquettes[hash].owner, to, tokenId);
 
         // Pay the protocol fee, move the collateral to Vault, pay the seller
-        payable(address(_treasury)).transfer(protocolFeeAmount);
+        payable(address(_treasury)).sendValue(protocolFeeAmount);
         emit ProtocolFeePaid(operator, _uniquettes[hash].owner, to, tokenId, protocolFeeAmount);
 
-        payable(address(_vault)).transfer(additionalCollateral);
+        payable(address(_vault)).sendValue(additionalCollateral);
         emit UniquetteCollateralIncreased(operator, to, tokenId, additionalCollateral);
 
-        payable(address(saleAmountReceiver)).transfer(saleReceivableAmount);
+        if (saleReceivableAmount > 0) {
+            payable(address(saleAmountReceiver)).sendValue(saleReceivableAmount);
+        }
 
         // Compensate original author for their submission with ERC-20 tokens
         if (saleRewardReceiver != address(0) && saleRewardAmount > 0) {
@@ -525,7 +528,7 @@ contract Directory is
         require(_uniquettes[hash].author != address(0), "Directory: uniquette does not exist");
         require(_uniquettes[hash].status == UniquetteStatus.Approved, "Directory: uniquette not approved");
 
-        payable(address(_vault)).transfer(msg.value);
+        payable(address(_vault)).sendValue(msg.value);
 
         _uniquettes[hash].collateralValue += msg.value;
 

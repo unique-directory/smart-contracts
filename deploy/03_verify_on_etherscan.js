@@ -29,5 +29,11 @@ module.exports = async ({deployments}) => {
   }
 };
 
-module.exports.tags = ['Directory'];
-module.exports.dependencies = ['Marketer', 'Token', 'Treasury', 'Vault'];
+module.exports.tags = ['etherscan-verify'];
+module.exports.dependencies = [
+  'Directory',
+  'Marketer',
+  'Token',
+  'Treasury',
+  'Vault',
+];
