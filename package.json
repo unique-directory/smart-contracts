@@ -8,7 +8,7 @@
     "lint:fix": "eslint --fix \"**/*.{js,ts}\" && solhint --fix src/**/*.sol",
     "format": "prettier --check \"**/*.{ts,js,sol}\"",
     "format:fix": "prettier --write \"**/*.{ts,js,sol}\"",
-    "test": "npx hardhat test"
+    "test": "npx hardhat test --network hardhat"
   },
   "keywords": [
     "ethereum",

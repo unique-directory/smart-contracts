@@ -12,11 +12,8 @@ import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 
-import "./Common.sol";
-
 contract Token is
     Initializable,
-    Common,
     ContextUpgradeable,
     AccessControlEnumerableUpgradeable,
     ERC20BurnableUpgradeable,

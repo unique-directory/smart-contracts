@@ -11,7 +11,6 @@ import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721Enumer
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 
-import "./Common.sol";
 import "./Token.sol";
 import "./Vault.sol";
 import "./Treasury.sol";
@@ -110,12 +109,7 @@ contract Directory is
         address payable marketer,
         uint256[8] memory uints
     ) public initializer {
-        //        __Context_init();
-        //        __AccessControlEnumerable_init();
-        //        __ERC721Enumerable_init();
-        //        __ERC721Pausable_init();
         __ERC721_init(name, symbol);
-        //        __ReentrancyGuard_init();
 
         _tokensBaseURI = tokensBaseURI;
         _token = Token(token);

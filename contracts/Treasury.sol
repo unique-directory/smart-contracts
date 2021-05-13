@@ -5,11 +5,10 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
 
-import "./Common.sol";
 import "./Token.sol";
 import "./PaymentRecipient.sol";
 
-contract Treasury is Common, AccessControlUpgradeable, PaymentRecipient {
+contract Treasury is AccessControlUpgradeable, PaymentRecipient {
     bytes32 public constant GOVERNOR_ROLE = keccak256("GOVERNOR_ROLE");
 
     event BoughtBack(address initiator, uint256 ethAmount, uint256 tokensBought);
