@@ -1,17 +1,11 @@
-module.exports = async ({getNamedAccounts, deployments}) => {
-  const {deploy} = deployments;
-  const {deployer} = await getNamedAccounts();
+const {deployUpgradableContract} = require('../hardhat.util');
 
-  await deploy('Treasury', {
-    from: deployer,
-    args: [process.env.UNISWAP_ROUTER_ADDR],
-    log: true,
-    proxy: {
-      owner: deployer,
-      proxyContract: 'OpenZeppelinTransparentProxy',
-      methodName: 'initialize',
-    },
-  });
+module.exports = async ({getNamedAccounts, deployments}) => {
+  const {deployer, governor} = await getNamedAccounts();
+
+  await deployUpgradableContract(deployments, deployer, governor, 'Treasury', [
+    process.env.UNISWAP_ROUTER_ADDR,
+  ]);
 };
 
-module.exports.tags = ['Token'];
+module.exports.tags = ['Treasury'];

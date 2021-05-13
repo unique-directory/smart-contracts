@@ -1,9 +1,9 @@
 const web3 = require('web3');
-const hre = require('hardhat');
+
+const {deployUpgradableContract} = require('../hardhat.util');
 
 module.exports = async ({getNamedAccounts, deployments}) => {
-  const {deploy} = deployments;
-  const {deployer} = await getNamedAccounts();
+  const {deployer, governor} = await getNamedAccounts();
 
   const token = await deployments.get('Token');
   const vault = await deployments.get('Vault');
@@ -30,16 +30,7 @@ module.exports = async ({getNamedAccounts, deployments}) => {
     ],
   ];
 
-  await deploy('Directory', {
-    from: deployer,
-    args: contractArguments,
-    log: true,
-    proxy: {
-      owner: deployer,
-      proxyContract: 'OpenZeppelinTransparentProxy',
-      methodName: 'initialize',
-    },
-  });
+  await deployUpgradableContract(deployments, deployer, governor, 'Directory', contractArguments);
 };
 
 module.exports.tags = ['Directory'];

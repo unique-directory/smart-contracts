@@ -19,7 +19,7 @@ const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY;
  */
 module.exports = {
   solidity: {
-    version: '0.8.0',
+    version: '0.8.3',
     settings: {
       optimizer: {
         enabled: true,
@@ -50,6 +50,9 @@ module.exports = {
   },
   namedAccounts: {
     deployer: {
+      default: 0,
+    },
+    governor: {
       default: 0,
     },
   },

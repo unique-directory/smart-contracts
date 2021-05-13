@@ -1,19 +1,12 @@
-const hre = require('hardhat');
+const {deployUpgradableContract} = require('../hardhat.util');
 
 module.exports = async ({getNamedAccounts, deployments}) => {
-  const {deploy} = deployments;
-  const {deployer} = await getNamedAccounts();
+  const {deployer, governor} = await getNamedAccounts();
 
-  await deploy('Token', {
-    from: deployer,
-    args: ['Unique Directory Governance Tokens', 'UNQ'],
-    log: true,
-    proxy: {
-      owner: deployer,
-      proxyContract: 'OpenZeppelinTransparentProxy',
-      methodName: 'initialize',
-    },
-  });
+  await deployUpgradableContract(deployments, deployer, governor, 'Token', [
+    'Unique Directory Governance Tokens',
+    'UNQ',
+  ]);
 };
 
 module.exports.tags = ['Token'];

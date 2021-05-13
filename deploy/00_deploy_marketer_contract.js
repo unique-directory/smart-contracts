@@ -1,17 +1,15 @@
-module.exports = async ({getNamedAccounts, deployments}) => {
-  const {deploy} = deployments;
-  const {deployer} = await getNamedAccounts();
+const {deployUpgradableContract} = require('../hardhat.util');
 
-  await deploy('Marketer', {
-    from: deployer,
-    args: [],
-    log: true,
-    proxy: {
-      owner: deployer,
-      proxyContract: 'OpenZeppelinTransparentProxy',
-      methodName: 'initialize'
-    },
-  });
+module.exports = async ({getNamedAccounts, deployments}) => {
+  const {deployer, governor} = await getNamedAccounts();
+
+  await deployUpgradableContract(
+    deployments,
+    deployer,
+    governor,
+    'Marketer',
+    []
+  );
 };
 
 module.exports.tags = ['Marketer'];

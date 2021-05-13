@@ -1,19 +1,9 @@
-const hre = require('hardhat');
+const {deployUpgradableContract} = require('../hardhat.util');
 
 module.exports = async ({getNamedAccounts, deployments}) => {
-  const {deploy} = deployments;
-  const {deployer} = await getNamedAccounts();
+  const {deployer, governor} = await getNamedAccounts();
 
-  await deploy('Vault', {
-    from: deployer,
-    args: [],
-    log: true,
-    proxy: {
-      owner: deployer,
-      proxyContract: 'OpenZeppelinTransparentProxy',
-      methodName: 'initialize',
-    },
-  });
+  await deployUpgradableContract(deployments, deployer, governor, 'Vault', []);
 };
 
-module.exports.tags = ['Vault'];
+module.exports.tags = ['Treasury'];
