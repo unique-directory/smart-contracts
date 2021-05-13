@@ -4,9 +4,10 @@ module.exports = async ({deployments}) => {
   if (
     !hre.hardhatArguments ||
     !hre.hardhatArguments.network ||
-    hre.hardhatArguments.network === 'hardhat'
+    hre.hardhatArguments.network === 'hardhat' ||
+    hre.hardhatArguments.network.substr(0, 4) === 'bsc_'
   ) {
-    console.log(' - skipping verification on hardhat.');
+    console.log(` - skipping verification on ${hre.hardhatArguments.network}.`);
     return;
   }
 

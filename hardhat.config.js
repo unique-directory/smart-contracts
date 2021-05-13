@@ -37,6 +37,14 @@ module.exports = {
         ? {accounts: [`0x${DEPLOYER_PRIVATE_KEY}`]}
         : {}),
     },
+    bsc_testnet: {
+      url: "https://data-seed-prebsc-1-s1.binance.org:8545",
+      chainId: 97,
+      gasPrice: 20000000000,
+      ...(DEPLOYER_PRIVATE_KEY
+        ? {accounts: [`0x${DEPLOYER_PRIVATE_KEY}`]}
+        : {}),
+    },
   },
   etherscan: {
     // Your API key for Etherscan
