@@ -1,8 +1,8 @@
 require('hardhat-deploy');
 require('@nomiclabs/hardhat-waffle');
 require('@nomiclabs/hardhat-ethers');
-require("@nomiclabs/hardhat-etherscan");
-require("@openzeppelin/hardhat-upgrades");
+require('@nomiclabs/hardhat-etherscan');
+require('@openzeppelin/hardhat-upgrades');
 require('hardhat-contract-sizer');
 
 require('dotenv').config();
@@ -23,17 +23,19 @@ module.exports = {
     settings: {
       optimizer: {
         enabled: true,
-        runs: 10
-      }
-    }
+        runs: 10,
+      },
+    },
   },
   defaultNetwork: 'hardhat',
   networks: {
     hardhat: {},
     rinkeby: {
       url: `https://rinkeby.infura.io/v3/${INFURA_PROJECT_ID}`,
-      accounts: DEPLOYER_PRIVATE_KEY ? [`0x${DEPLOYER_PRIVATE_KEY}`] : null,
       network_id: '*',
+      ...(DEPLOYER_PRIVATE_KEY
+        ? {accounts: [`0x${DEPLOYER_PRIVATE_KEY}`]}
+        : {}),
     },
   },
   etherscan: {
@@ -49,6 +51,6 @@ module.exports = {
   namedAccounts: {
     deployer: {
       default: 0,
-    }
-  }
+    },
+  },
 };
