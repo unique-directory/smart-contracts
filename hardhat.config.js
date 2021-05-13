@@ -11,13 +11,6 @@ const INFURA_PROJECT_ID = process.env.INFURA_PROJECT_ID;
 const DEPLOYER_PRIVATE_KEY = process.env.DEPLOYER_PRIVATE_KEY;
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY;
 
-if (!INFURA_PROJECT_ID || !DEPLOYER_PRIVATE_KEY || !ETHERSCAN_API_KEY) {
-  console.error(
-    'Please set INFURA_PROJECT_ID, DEPLOYER_PRIVATE_KEY and ETHERSCAN_API_KEY.'
-  );
-  return;
-}
-
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
 
@@ -43,12 +36,12 @@ module.exports = {
     },
     rinkeby: {
       url: `https://rinkeby.infura.io/v3/${INFURA_PROJECT_ID}`,
-      accounts: [`0x${DEPLOYER_PRIVATE_KEY}`],
+      accounts: DEPLOYER_PRIVATE_KEY ? [`0x${DEPLOYER_PRIVATE_KEY}`] : [],
       network_id: '*',
     },
     kovan: {
       url: `https://kovan.infura.io/v3/${INFURA_PROJECT_ID}`,
-      accounts: [`0x${DEPLOYER_PRIVATE_KEY}`],
+      accounts: DEPLOYER_PRIVATE_KEY ? [`0x${DEPLOYER_PRIVATE_KEY}`] : [],
       network_id: '*',
     },
   },
