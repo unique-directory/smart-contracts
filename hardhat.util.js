@@ -11,6 +11,7 @@ const deployUpgradableContract = async (deployments, from, owner, name, args) =>
       proxyContract: 'OpenZeppelinTransparentProxy',
       ...(instance && instance.implementation ? {} : {methodName: 'initialize'})
     },
+    estimateGasExtra: 1000000
   });
 };
 
