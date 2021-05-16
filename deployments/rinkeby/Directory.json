@@ -1298,7 +1298,7 @@
           "type": "uint256"
         }
       ],
-      "name": "uniquetteBuy",
+      "name": "uniquetteCollect",
       "outputs": [],
       "stateMutability": "payable",
       "type": "function"
@@ -2869,7 +2869,7 @@
               "type": "uint256"
             }
           ],
-          "name": "uniquetteBuy",
+          "name": "uniquetteCollect",
           "outputs": [],
           "stateMutability": "payable",
           "type": "function"
@@ -4440,7 +4440,7 @@
                   "type": "uint256"
                 }
               ],
-              "name": "uniquetteBuy",
+              "name": "uniquetteCollect",
               "outputs": [],
               "stateMutability": "payable",
               "type": "function"
@@ -6011,7 +6011,7 @@
                       "type": "uint256"
                     }
                   ],
-                  "name": "uniquetteBuy",
+                  "name": "uniquetteCollect",
                   "outputs": [],
                   "stateMutability": "payable",
                   "type": "function"
@@ -7582,7 +7582,7 @@
                           "type": "uint256"
                         }
                       ],
-                      "name": "uniquetteBuy",
+                      "name": "uniquetteCollect",
                       "outputs": [],
                       "stateMutability": "payable",
                       "type": "function"
@@ -9153,7 +9153,7 @@
                               "type": "uint256"
                             }
                           ],
-                          "name": "uniquetteBuy",
+                          "name": "uniquetteCollect",
                           "outputs": [],
                           "stateMutability": "payable",
                           "type": "function"

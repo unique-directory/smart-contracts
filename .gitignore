@@ -7,4 +7,5 @@ cache
 artifacts
 solcInputs
 deployments/localhost
-
+coverage
+coverage.json

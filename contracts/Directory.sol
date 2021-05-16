@@ -388,15 +388,16 @@ contract Directory is
         require(_exists(tokenId), "Directory: nonexistent token");
 
         string memory hash = _idToHashMapping[tokenId];
-        require(_uniquettes[hash].author != address(0), "Directory: uniquette does not exist");
-        require(_uniquettes[hash].status == UniquetteStatus.Approved, "Directory: uniquette is not approved");
+        Uniquette memory uniquette = _uniquettes[hash];
+        require(uniquette.author != address(0), "Directory: uniquette does not exist");
+        require(uniquette.status == UniquetteStatus.Approved, "Directory: uniquette is not approved");
         require(
-            _uniquettes[hash].metadataVersion >= _minMetadataVersion,
+            uniquette.metadataVersion >= _minMetadataVersion,
             "Directory: metadata version is too old, please upgrade"
         );
 
         address operator = _msgSender();
-        address owner = _uniquettes[hash].owner;
+        address owner = uniquette.owner;
 
         require(
             owner == _msgSender() || isApprovedForAll(owner, _msgSender()),
@@ -404,17 +405,11 @@ contract Directory is
         );
 
         // Check if price is reasonable
-        uint256 minSensiblePrice = _uniquettes[hash].collateralValue;
-        uint256 maxAllowedPriceByCollateral =
-            _uniquettes[hash].collateralValue + ((_maxPriceIncrease * _uniquettes[hash].collateralValue) / 10000);
-        uint256 maxAllowedPriceByLastPurchase =
-            _uniquettes[hash].lastPurchaseAmount + ((_maxPriceIncrease * _uniquettes[hash].lastPurchaseAmount) / 10000);
+        uint256 minSensiblePrice = uniquette.collateralValue;
+        uint256 maxSalePrice = calculateMaxSalePrice(uniquette);
 
         require(price >= minSensiblePrice, "Directory: sale price must be equal or more than collateral");
-        require(
-            price <= maxAllowedPriceByCollateral || price <= maxAllowedPriceByLastPurchase,
-            "Directory: sale price exceeds max allowed"
-        );
+        require(price <= maxSalePrice, "Directory: cannot sell higher max price increase cap");
 
         _uniquettes[hash].salePrice = price;
 
@@ -441,27 +436,38 @@ contract Directory is
         emit UniquetteTakeOffFromSale(operator, owner, tokenId, hash);
     }
 
-    function uniquetteBuy(address to, uint256 tokenId) public payable virtual nonReentrant {
+    function uniquetteCollect(address to, uint256 tokenId) public payable virtual nonReentrant {
         require(_exists(tokenId), "Directory: nonexistent token");
 
         // Check if uniquette is sellable
         string memory hash = _idToHashMapping[tokenId];
+        Uniquette memory uniquette = _uniquettes[hash];
 
         require(to != address(0), "Directory: buy to the zero address");
-        require(_uniquettes[hash].author != address(0), "Directory: uniquette does not exist");
-        require(_uniquettes[hash].status == UniquetteStatus.Approved, "Directory: uniquette not approved");
-        require(_uniquettes[hash].salePrice > 0, "Directory: uniquette not for sale");
+        require(uniquette.author != address(0), "Directory: uniquette does not exist");
+        require(uniquette.status == UniquetteStatus.Approved, "Directory: uniquette not approved");
         require(
-            _uniquettes[hash].metadataVersion >= _minMetadataVersion,
+            uniquette.metadataVersion >= _minMetadataVersion,
             "Directory: metadata version is too old, must be upgraded"
         );
 
         address operator = _msgSender();
 
+        uint256 salePrice;
+        uint256 maxSalePrice = calculateMaxSalePrice(_uniquettes[hash]);
+
+        if (uniquette.salePrice > 0) {
+            require(uniquette.firstSale || uniquette.salePrice >= uniquette.collateralValue, "Directory: cannot sell less than collateral");
+            require(uniquette.firstSale || uniquette.salePrice <= maxSalePrice, "Directory: cannot sell higher than max price increase cap");
+            salePrice = _uniquettes[hash].salePrice;
+        } else {
+            salePrice = maxSalePrice;
+        }
+
         // Check if ETH payment is enough
-        uint256 protocolFeeAmount = (_uniquettes[hash].salePrice * _protocolFee) / 10000;
+        uint256 protocolFeeAmount = (salePrice * _protocolFee) / 10000;
         require(
-            msg.value >= _uniquettes[hash].salePrice + protocolFeeAmount,
+            msg.value >= salePrice + protocolFeeAmount,
             "Directory: insufficient payment for sale price plus protocol fee"
         );
 
@@ -472,12 +478,12 @@ contract Directory is
         address saleRewardReceiver;
         if (_uniquettes[hash].firstSale) {
             _uniquettes[hash].firstSale = false;
-            saleReceivableAmount = (_uniquettes[hash].salePrice * _originalAuthorShare) / 10000;
+            saleReceivableAmount = (salePrice * _originalAuthorShare) / 10000;
             saleAmountReceiver = _uniquettes[hash].author;
             saleRewardAmount = _uniquettes[hash].submissionReward;
             saleRewardReceiver = _uniquettes[hash].author;
         } else {
-            saleReceivableAmount = _uniquettes[hash].salePrice;
+            saleReceivableAmount = salePrice;
             saleAmountReceiver = _uniquettes[hash].owner;
         }
 
@@ -527,5 +533,18 @@ contract Directory is
         _uniquettes[hash].collateralValue += msg.value;
 
         emit UniquetteCollateralIncreased(_msgSender(), _uniquettes[hash].owner, tokenId, msg.value);
+    }
+
+    //
+    // Internal functions
+    //
+    function calculateMaxSalePrice(
+        Uniquette memory uniquette
+    ) internal virtual view returns (uint256) {
+        if (uniquette.lastPurchaseAmount < uniquette.collateralValue) {
+            return uniquette.collateralValue + ((uniquette.collateralValue * _maxPriceIncrease) / 10000);
+        } else {
+            return uniquette.lastPurchaseAmount + ((uniquette.lastPurchaseAmount * _maxPriceIncrease) / 10000);
+        }
     }
 }

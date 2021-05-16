@@ -20,7 +20,7 @@ describe('Vault', () => {
       fakeHash,
       web3.utils.toWei('5000')
     );
-    await userB.directoryContract.uniquetteBuy(userB.signer.address, 1, {
+    await userB.directoryContract.uniquetteCollect(userB.signer.address, 1, {
       value: web3.utils.toWei('1.05'), // ETH
     });
 
@@ -67,14 +67,14 @@ describe('Vault', () => {
       fakeHash,
       web3.utils.toWei('5000')
     );
-    await userB.directoryContract.uniquetteBuy(userB.signer.address, 1, {
+    await userB.directoryContract.uniquetteCollect(userB.signer.address, 1, {
       value: web3.utils.toWei('1.05'),
     });
 
     await userB.vaultContract.uniquetteLiquidate(1, userB.signer.address);
 
     await expect(
-      await userC.directoryContract.uniquetteBuy(userC.signer.address, 1, {
+      await userC.directoryContract.uniquetteCollect(userC.signer.address, 1, {
         value: web3.utils.toWei('1.05'), // ETH
       })
     ).to.changeEtherBalances(
@@ -118,13 +118,13 @@ describe('Vault', () => {
       fakeHash,
       web3.utils.toWei('5000')
     );
-    await userB.directoryContract.uniquetteBuy(userB.signer.address, 1, {
+    await userB.directoryContract.uniquetteCollect(userB.signer.address, 1, {
       value: web3.utils.toWei('1.05'), // ETH
     });
 
     await userB.vaultContract.uniquetteLiquidate(1, userB.signer.address);
 
-    await userC.directoryContract.uniquetteBuy(userC.signer.address, 1, {
+    await userC.directoryContract.uniquetteCollect(userC.signer.address, 1, {
       value: web3.utils.toWei('1.05'),
     });
 
