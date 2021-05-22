@@ -40,7 +40,7 @@ describe('Directory', () => {
       )
     )
       .to.emit(governor.directoryContract, 'UniquetteApproved')
-      .withArgs(governor.signer.address, userA.signer.address, fakeHash, 1);
+      .withArgs(governor.signer.address, userA.signer.address, fakeHash, 1, web3.utils.toWei('5000'));
   });
 
   it('should reject a uniquette submission', async () => {

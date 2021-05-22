@@ -49,7 +49,7 @@ contract Directory is
     }
 
     event UniquetteSubmitted(address indexed submitter, string hash, uint256 collateral);
-    event UniquetteApproved(address approver, address indexed submitter, string hash, uint256 indexed tokenId);
+    event UniquetteApproved(address approver, address indexed submitter, string hash, uint256 indexed tokenId, uint256 submissionReward);
     event UniquetteRejected(address approver, address indexed submitter, string hash);
     event UniquetteBought(address operator, address indexed seller, address indexed buyer, uint256 indexed tokenId);
     event UniquetteCollateralIncreased(
@@ -364,7 +364,7 @@ contract Directory is
         // Return the submit collateral to author
         payable(address(_uniquettes[hash].author)).sendValue(_uniquettes[hash].submissionDeposit);
 
-        emit UniquetteApproved(_msgSender(), _uniquettes[hash].author, hash, newTokenId);
+        emit UniquetteApproved(_msgSender(), _uniquettes[hash].author, hash, newTokenId, submissionReward);
     }
 
     function uniquetteReject(string calldata hash) public isGovernor() nonReentrant {
