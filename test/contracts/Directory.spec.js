@@ -40,7 +40,7 @@ describe('Directory', () => {
       )
     )
       .to.emit(governor.directoryContract, 'UniquetteApproved')
-      .withArgs(governor.signer.address, userA.signer.address, fakeHash, 1);
+      .withArgs(governor.signer.address, userA.signer.address, fakeHash, 1, web3.utils.toWei('5000'));
   });
 
   it('should reject a uniquette submission', async () => {
@@ -80,7 +80,7 @@ describe('Directory', () => {
     );
   });
 
-  it('should sell a new uniquette to a buyer and reward original author', async () => {
+  it('should sell a new uniquette to a collector and reward original author', async () => {
     const {governor, userA, userB} = await setupTest();
     const fakeHash = uuid();
 

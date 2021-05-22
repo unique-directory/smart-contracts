@@ -49,9 +49,9 @@ contract Directory is
     }
 
     event UniquetteSubmitted(address indexed submitter, string hash, uint256 collateral);
-    event UniquetteApproved(address approver, address indexed submitter, string hash, uint256 indexed tokenId);
+    event UniquetteApproved(address approver, address indexed submitter, string hash, uint256 indexed tokenId, uint256 submissionReward);
     event UniquetteRejected(address approver, address indexed submitter, string hash);
-    event UniquetteBought(address operator, address indexed seller, address indexed buyer, uint256 indexed tokenId);
+    event UniquetteCollected(address operator, address indexed seller, address indexed collector, uint256 indexed tokenId);
     event UniquetteCollateralIncreased(
         address indexed operator,
         address indexed owner,
@@ -74,7 +74,7 @@ contract Directory is
     event ProtocolFeePaid(
         address indexed operator,
         address seller,
-        address indexed buyer,
+        address indexed collector,
         uint256 indexed tokenId,
         uint256 feePaid
     );
@@ -364,7 +364,7 @@ contract Directory is
         // Return the submit collateral to author
         payable(address(_uniquettes[hash].author)).sendValue(_uniquettes[hash].submissionDeposit);
 
-        emit UniquetteApproved(_msgSender(), _uniquettes[hash].author, hash, newTokenId);
+        emit UniquetteApproved(_msgSender(), _uniquettes[hash].author, hash, newTokenId, submissionReward);
     }
 
     function uniquetteReject(string calldata hash) public isGovernor() nonReentrant {
@@ -500,7 +500,7 @@ contract Directory is
         // Transfer ownership of uniquette in ERC-721 fashion
         _approve(operator, tokenId);
         _transfer(_uniquettes[hash].owner, to, tokenId);
-        emit UniquetteBought(operator, _uniquettes[hash].owner, to, tokenId);
+        emit UniquetteCollected(operator, _uniquettes[hash].owner, to, tokenId);
 
         // Pay the protocol fee, move the collateral to Vault, pay the seller
         payable(address(_treasury)).sendValue(protocolFeeAmount);
