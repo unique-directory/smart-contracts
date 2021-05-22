@@ -125,6 +125,50 @@ describe('Directory', () => {
     ).to.equal(1);
   });
 
+  it('should sell a new uniquette to first collector and consider additional collateral', async () => {
+    const {governor, userA, userB, userC} = await setupTest();
+    const fakeHash = uuid();
+
+    await userA.directoryContract.uniquetteSubmit(
+      fakeHash,
+      1, // Schema v1
+      {
+        value: web3.utils.toWei('0.1'), // ETH
+      }
+    );
+    await governor.directoryContract.uniquetteApprove(
+      fakeHash,
+      web3.utils.toWei('4000')
+    );
+
+    await userB.directoryContract.uniquetteCollect(userB.signer.address, 1, {
+      value: web3.utils.toWei('1.05'),
+    });
+
+    await userB.directoryContract.uniquetteIncreaseCollateral(1, {
+      value: web3.utils.toWei('3'),
+    });
+
+    await userB.directoryContract.uniquetteForSale(
+      1,
+      web3.utils.toWei('4.35')
+    );
+
+    await expect(
+      await userC.directoryContract.uniquetteCollect(userC.signer.address, 1, {
+        value: web3.utils.toWei('4.85'),
+      })
+    )
+      .to.emit(userC.directoryContract, 'UniquetteCollected')
+      .withArgs(
+        userC.signer.address,
+        userB.signer.address,
+        userC.signer.address,
+        1,
+        web3.utils.toWei('4.35')
+      );
+  });
+
   it('should increase the collateral when owner sends eth', async () => {
     const {governor, userA, userB} = await setupTest();
     const fakeHash = uuid();
