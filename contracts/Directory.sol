@@ -51,21 +51,27 @@ contract Directory is
     event UniquetteSubmitted(address indexed submitter, string hash, uint256 collateral);
     event UniquetteApproved(address approver, address indexed submitter, string hash, uint256 indexed tokenId, uint256 submissionReward);
     event UniquetteRejected(address approver, address indexed submitter, string hash);
-    event UniquetteCollected(address operator, address indexed seller, address indexed collector, uint256 indexed tokenId);
+    event UniquetteCollected(
+        address operator,
+        address indexed seller,
+        address indexed collector,
+        uint256 indexed tokenId,
+        uint256 salePrice
+    );
     event UniquetteCollateralIncreased(
         address indexed operator,
         address indexed owner,
         uint256 indexed tokenId,
         uint256 additionalCollateral
     );
-    event UniquettePutForSale(
+    event UniquettePutOnSale(
         address indexed operator,
         address indexed seller,
         uint256 indexed tokenId,
         string hash,
         uint256 price
     );
-    event UniquetteTakeOffFromSale(
+    event UniquetteTookOffSale(
         address indexed operator,
         address indexed seller,
         uint256 indexed tokenId,
@@ -413,7 +419,7 @@ contract Directory is
 
         _uniquettes[hash].salePrice = price;
 
-        emit UniquettePutForSale(operator, owner, tokenId, hash, price);
+        emit UniquettePutOnSale(operator, owner, tokenId, hash, price);
     }
 
     function uniquetteNotForSale(uint256 tokenId) public virtual nonReentrant {
@@ -433,7 +439,7 @@ contract Directory is
 
         _uniquettes[hash].salePrice = 0;
 
-        emit UniquetteTakeOffFromSale(operator, owner, tokenId, hash);
+        emit UniquetteTookOffSale(operator, owner, tokenId, hash);
     }
 
     function uniquetteCollect(address to, uint256 tokenId) public payable virtual nonReentrant {
@@ -452,6 +458,7 @@ contract Directory is
         );
 
         address operator = _msgSender();
+        address seller = uniquette.owner;
 
         uint256 salePrice;
         uint256 maxSalePrice = calculateMaxSalePrice(_uniquettes[hash]);
@@ -484,7 +491,7 @@ contract Directory is
             saleRewardReceiver = _uniquettes[hash].author;
         } else {
             saleReceivableAmount = salePrice;
-            saleAmountReceiver = _uniquettes[hash].owner;
+            saleAmountReceiver = seller;
         }
 
         // Calculate extra ETH sent to be kept as collateral
@@ -499,12 +506,18 @@ contract Directory is
 
         // Transfer ownership of uniquette in ERC-721 fashion
         _approve(operator, tokenId);
-        _transfer(_uniquettes[hash].owner, to, tokenId);
-        emit UniquetteCollected(operator, _uniquettes[hash].owner, to, tokenId);
+        _transfer(seller, to, tokenId);
+        emit UniquetteCollected(
+            operator,
+            seller,
+            to,
+            tokenId,
+            uniquette.salePrice
+        );
 
         // Pay the protocol fee, move the collateral to Vault, pay the seller
         payable(address(_treasury)).sendValue(protocolFeeAmount);
-        emit ProtocolFeePaid(operator, _uniquettes[hash].owner, to, tokenId, protocolFeeAmount);
+        emit ProtocolFeePaid(operator, seller, to, tokenId, protocolFeeAmount);
 
         payable(address(_vault)).sendValue(additionalCollateral);
         emit UniquetteCollateralIncreased(operator, to, tokenId, additionalCollateral);
