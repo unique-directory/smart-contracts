@@ -329,7 +329,7 @@ describe('Directory', () => {
         web3.utils.toWei('1.21')
       )
     )
-      .to.emit(userB.directoryContract, 'UniquettePutForSale')
+      .to.emit(userB.directoryContract, 'UniquettePutOnSale')
       .withArgs(userB.signer.address, userB.signer.address, 1, fakeHash, web3.utils.toWei('1.21'));
   });
 
@@ -386,7 +386,7 @@ describe('Directory', () => {
         web3.utils.toWei('3.3')
       )
     )
-      .to.emit(userB.directoryContract, 'UniquettePutForSale')
+      .to.emit(userB.directoryContract, 'UniquettePutOnSale')
       .withArgs(userB.signer.address, userB.signer.address, 1, fakeHash, web3.utils.toWei('3.3'));
   });
 
@@ -446,7 +446,7 @@ describe('Directory', () => {
         web3.utils.toWei('3.3')
       )
     )
-      .to.emit(userB.directoryContract, 'UniquettePutForSale')
+      .to.emit(userB.directoryContract, 'UniquettePutOnSale')
       .withArgs(userB.signer.address, userB.signer.address, 1, fakeHash, web3.utils.toWei('3.3'));
   });
 

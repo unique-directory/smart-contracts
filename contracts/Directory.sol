@@ -64,7 +64,7 @@ contract Directory is
         uint256 indexed tokenId,
         uint256 additionalCollateral
     );
-    event UniquettePutForSale(
+    event UniquettePutOnSale(
         address indexed operator,
         address indexed seller,
         uint256 indexed tokenId,
@@ -419,7 +419,7 @@ contract Directory is
 
         _uniquettes[hash].salePrice = price;
 
-        emit UniquettePutForSale(operator, owner, tokenId, hash, price);
+        emit UniquettePutOnSale(operator, owner, tokenId, hash, price);
     }
 
     function uniquetteNotForSale(uint256 tokenId) public virtual nonReentrant {
