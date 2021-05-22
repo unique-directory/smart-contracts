@@ -51,7 +51,7 @@ contract Directory is
     event UniquetteSubmitted(address indexed submitter, string hash, uint256 collateral);
     event UniquetteApproved(address approver, address indexed submitter, string hash, uint256 indexed tokenId, uint256 submissionReward);
     event UniquetteRejected(address approver, address indexed submitter, string hash);
-    event UniquetteCollected(address operator, address indexed seller, address indexed buyer, uint256 indexed tokenId);
+    event UniquetteCollected(address operator, address indexed seller, address indexed collector, uint256 indexed tokenId);
     event UniquetteCollateralIncreased(
         address indexed operator,
         address indexed owner,
@@ -74,7 +74,7 @@ contract Directory is
     event ProtocolFeePaid(
         address indexed operator,
         address seller,
-        address indexed buyer,
+        address indexed collector,
         uint256 indexed tokenId,
         uint256 feePaid
     );

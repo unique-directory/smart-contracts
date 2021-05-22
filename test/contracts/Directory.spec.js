@@ -80,7 +80,7 @@ describe('Directory', () => {
     );
   });
 
-  it('should sell a new uniquette to a buyer and reward original author', async () => {
+  it('should sell a new uniquette to a collector and reward original author', async () => {
     const {governor, userA, userB} = await setupTest();
     const fakeHash = uuid();
 
