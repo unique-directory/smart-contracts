@@ -253,18 +253,25 @@ contract Uniquettes is
 
         Uniquette memory uniquette = uniquetteGetById(tokenId);
 
+        console.log("msg.value = %s", msg.value);
         require(msg.value > 0, "UNIQUETTES/PAYMENT_REQUIRED");
 
         address seller = uniquette.owner;
 
         uint256 effectivePrice = calculateEffectivePrice(uniquette);
+        console.log("effectivePrice = %s", effectivePrice);
         uint256 protocolFeeAmount = (msg.value * _protocolFee) / 10000;
+        console.log("protocolFeeAmount = %s", protocolFeeAmount);
+
         uint256 principalAmount = msg.value - protocolFeeAmount;
+        console.log("principalAmount = %s", principalAmount);
         uint256 appreciatedPrice = effectivePrice + addedValue;
+        console.log("appreciatedPrice = %s", appreciatedPrice);
 
         require(principalAmount >= appreciatedPrice, "UNIQUETTES/NOT_ENOUGH_PRINCIPAL");
 
-        uint256 additionalCollateral = principalAmount - appreciatedPrice;
+        uint256 additionalCollateral = principalAmount - effectivePrice;
+        console.log("additionalCollateral = %s", additionalCollateral);
 
         require(principalAmount >= appreciatedPrice, "UNIQUETTES/NOT_ENOUGH_PRINCIPAL");
         require(protocolFeeAmount > 0, "UNIQUETTES/UNEXPECTED_ZERO_FEE");
@@ -285,6 +292,9 @@ contract Uniquettes is
         // Pay the protocol fee, move the collateral to Vault, pay the seller
         payable(address(_treasury)).sendValue(protocolFeeAmount);
         emit ProtocolFeePaid(operator, seller, to, tokenId, protocolFeeAmount);
+
+        // Pay the current owner
+        payable(address(_uniquettes[tokenId].owner)).sendValue(effectivePrice);
 
         if (additionalCollateral > 0) {
             payable(address(_vault)).sendValue(additionalCollateral);

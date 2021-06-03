@@ -4,6 +4,26 @@ const web3 = require('web3');
 
 const {setupTest} = require('../setup');
 
+function calculateRequiredPayment(etherEffectivePrice, additionalCollateral) {
+  const effectivePriceBN = web3.utils.toBN(
+    web3.utils.toWei(etherEffectivePrice)
+  );
+  const principalAmount = !additionalCollateral
+    ? effectivePriceBN
+    : effectivePriceBN.add(
+        web3.utils.toBN(web3.utils.toWei(additionalCollateral))
+      );
+
+  const hundredPercentBN = web3.utils.toBN(10000);
+  const protocolFeePercentBN = web3.utils.toBN(500);
+
+  const requiredAmountBN = principalAmount
+    .muln(10000)
+    .div(hundredPercentBN.sub(protocolFeePercentBN));
+
+  return requiredAmountBN;
+}
+
 describe('Directory', () => {
   it('should create a new submission for a new uniquette', async () => {
     const {userA} = await setupTest();
@@ -21,7 +41,13 @@ describe('Directory', () => {
       )
     )
       .to.emit(userA.directoryContract, 'SubmissionCreated')
-      .withArgs(userA.signer.address, 0, fakeHash, web3.utils.toWei('1'), web3.utils.toWei('0.1'));
+      .withArgs(
+        userA.signer.address,
+        0,
+        fakeHash,
+        web3.utils.toWei('1'),
+        web3.utils.toWei('0.1')
+      );
   });
 
   it('should approve a new submission for a new uniquette', async () => {
@@ -45,10 +71,15 @@ describe('Directory', () => {
       )
     )
       .to.emit(userA.directoryContract, 'SubmissionApproved')
-      .withArgs(governor.signer.address, userA.signer.address, fakeHash, web3.utils.toWei('100'));
+      .withArgs(
+        governor.signer.address,
+        userA.signer.address,
+        fakeHash,
+        web3.utils.toWei('100')
+      );
   });
 
-  it('should fund a new submission for a new uniquette', async () => {
+  it('should fund a new submission for a new uniquette with no additional collateral', async () => {
     const {userA, userB, governor} = await setupTest();
     const fakeHash = uuid();
 
@@ -70,7 +101,9 @@ describe('Directory', () => {
     const effectivePriceBN = web3.utils.toBN(web3.utils.toWei('1'));
     const hundredPercentBN = web3.utils.toBN(10000);
     const protocolFeePercentBN = web3.utils.toBN(500);
-    const requiredPaymentBN = effectivePriceBN.muln(10000).div(hundredPercentBN.sub(protocolFeePercentBN));
+    const requiredPaymentBN = effectivePriceBN
+      .muln(10000)
+      .div(hundredPercentBN.sub(protocolFeePercentBN));
 
     await expect(
       userB.directoryContract.fund(
@@ -83,13 +116,136 @@ describe('Directory', () => {
       )
     )
       .to.emit(userA.directoryContract, 'SubmissionFunded')
-      .withArgs(userB.signer.address, userB.signer.address, 1, fakeHash, web3.utils.toWei('1.052631578947368421'));
+      .withArgs(
+        userB.signer.address,
+        userB.signer.address,
+        1,
+        fakeHash,
+        web3.utils.toWei('1.052631578947368421')
+      );
 
     const uniquette = await userB.directoryContract.uniquetteGetById(
-      1, // Token ID
+      1 // Token ID
     );
 
     expect(uniquette.collateralValue.toString()).eq('0');
+  });
+
+  it('should collect an existing uniquette with no additional collateral', async () => {
+    const {userA, userB, userC, governor} = await setupTest();
+    const fakeHash = uuid();
+
+    await userA.directoryContract.submissionCreate(
+      0,
+      fakeHash,
+      1, // Schema v1
+      web3.utils.toWei('1'), // ETH - valueAdded
+      {
+        value: web3.utils.toWei('0.1'), // ETH
+      }
+    );
+
+    await governor.directoryContract.submissionApprove(
+      fakeHash,
+      web3.utils.toWei('100') // UNQ - reward
+    );
+
+    await userB.directoryContract.fund(
+      userB.signer.address,
+      1, // Token ID
+      fakeHash,
+      {
+        value: calculateRequiredPayment('1').toString(), // ETH : valueAdded + fee
+      }
+    );
+
+    await expect(
+      userC.directoryContract.collect(
+        userC.signer.address,
+        1, // Token ID
+        {
+          value: calculateRequiredPayment('1.1').toString(), // ETH : (last principal amount + max appreciation) + fee
+        }
+      )
+    )
+      .to.emit(userC.directoryContract, 'UniquetteCollected')
+      .withArgs(
+        userC.signer.address,
+        userB.signer.address,
+        userC.signer.address,
+        1,
+        web3.utils.toWei('1.1')
+      );
+
+    const uniquette = await userC.directoryContract.uniquetteGetById(
+      1 // Token ID
+    );
+
+    expect(uniquette.collateralValue.toString()).eq('0');
+  });
+
+  it('should collect an existing uniquette with some additional collateral', async () => {
+    const {userA, userB, userC, governor} = await setupTest();
+    const fakeHash = uuid();
+
+    await userA.directoryContract.submissionCreate(
+      0,
+      fakeHash,
+      1, // Schema v1
+      web3.utils.toWei('1'), // ETH - valueAdded
+      {
+        value: web3.utils.toWei('0.1'), // ETH
+      }
+    );
+
+    await governor.directoryContract.submissionApprove(
+      fakeHash,
+      web3.utils.toWei('100') // UNQ - reward
+    );
+
+    await userB.directoryContract.fund(
+      userB.signer.address,
+      1, // Token ID
+      fakeHash,
+      {
+        value: calculateRequiredPayment('1').toString(), // ETH : valueAdded + fee
+      }
+    );
+
+    const uniquetteAfterFund = await userC.directoryContract.uniquetteGetById(
+      1 // Token ID
+    );
+
+    expect(uniquetteAfterFund.collateralValue.toString()).eq(
+      web3.utils.toWei('1') // ETH
+    );
+
+    await expect(
+      userC.directoryContract.collect(
+        userC.signer.address,
+        1, // Token ID
+        {
+          value: calculateRequiredPayment('1.1', '2').toString(), // ETH : (last principal amount + max appreciation) + fee
+        }
+      )
+    )
+      .to.emit(userC.directoryContract, 'UniquetteCollected')
+      .withArgs(
+        userC.signer.address,
+        userB.signer.address,
+        userC.signer.address,
+        1,
+        web3.utils.toWei('1.1')
+      );
+
+    const uniquetteAfterCollect =
+      await userC.directoryContract.uniquetteGetById(
+        1 // Token ID
+      );
+
+    expect(uniquetteAfterCollect.collateralValue.toString()).eq(
+      web3.utils.toWei('3') // ETH
+    );
   });
 });
 
@@ -129,7 +285,13 @@ describe.skip('Directory', () => {
       )
     )
       .to.emit(governor.directoryContract, 'UniquetteApproved')
-      .withArgs(governor.signer.address, userA.signer.address, fakeHash, 1, web3.utils.toWei('5000'));
+      .withArgs(
+        governor.signer.address,
+        userA.signer.address,
+        fakeHash,
+        1,
+        web3.utils.toWei('5000')
+      );
   });
 
   it('should reject a uniquette submission', async () => {
@@ -164,9 +326,9 @@ describe.skip('Directory', () => {
       web3.utils.toWei('5000')
     );
 
-    await expect(await userA.tokenContract.balanceOf(userA.signer.address)).to.equal(
-      0
-    );
+    await expect(
+      await userA.tokenContract.balanceOf(userA.signer.address)
+    ).to.equal(0);
   });
 
   it('should sell a new uniquette to a collector and reward original author', async () => {
@@ -206,9 +368,9 @@ describe.skip('Directory', () => {
       ]
     );
 
-    await expect(await userA.tokenContract.balanceOf(userA.signer.address)).to.equal(
-      web3.utils.toWei('4000')
-    );
+    await expect(
+      await userA.tokenContract.balanceOf(userA.signer.address)
+    ).to.equal(web3.utils.toWei('4000'));
     await expect(
       await userB.directoryContract.balanceOf(userB.signer.address)
     ).to.equal(1);
@@ -238,10 +400,7 @@ describe.skip('Directory', () => {
       value: web3.utils.toWei('3'),
     });
 
-    await userB.directoryContract.uniquetteForSale(
-      1,
-      web3.utils.toWei('4.35')
-    );
+    await userB.directoryContract.uniquetteForSale(1, web3.utils.toWei('4.35'));
 
     await expect(
       await userC.directoryContract.uniquetteCollect(userC.signer.address, 1, {
@@ -300,7 +459,12 @@ describe.skip('Directory', () => {
       })
     )
       .to.emit(userB.directoryContract, 'UniquetteCollateralIncreased')
-      .withArgs(userB.signer.address, userB.signer.address, 1, web3.utils.toWei('3'));
+      .withArgs(
+        userB.signer.address,
+        userB.signer.address,
+        1,
+        web3.utils.toWei('3')
+      );
 
     await expect(
       await userB.directoryContract.uniquetteIncreaseCollateral(1, {
@@ -419,7 +583,13 @@ describe.skip('Directory', () => {
       )
     )
       .to.emit(userB.directoryContract, 'UniquettePutOnSale')
-      .withArgs(userB.signer.address, userB.signer.address, 1, fakeHash, web3.utils.toWei('1.21'));
+      .withArgs(
+        userB.signer.address,
+        userB.signer.address,
+        1,
+        fakeHash,
+        web3.utils.toWei('1.21')
+      );
   });
 
   it('should not put on sale with price higher than max based on last purchase', async () => {
@@ -446,8 +616,9 @@ describe.skip('Directory', () => {
         1,
         web3.utils.toWei('1.210000001')
       )
-    )
-      .to.be.revertedWith('Directory: cannot sell higher max price increase cap');
+    ).to.be.revertedWith(
+      'Directory: cannot sell higher max price increase cap'
+    );
   });
 
   it('should put on sale with maximum price based on purchase-time additional collateral', async () => {
@@ -470,13 +641,16 @@ describe.skip('Directory', () => {
     });
 
     await expect(
-      await userB.directoryContract.uniquetteForSale(
-        1,
-        web3.utils.toWei('3.3')
-      )
+      await userB.directoryContract.uniquetteForSale(1, web3.utils.toWei('3.3'))
     )
       .to.emit(userB.directoryContract, 'UniquettePutOnSale')
-      .withArgs(userB.signer.address, userB.signer.address, 1, fakeHash, web3.utils.toWei('3.3'));
+      .withArgs(
+        userB.signer.address,
+        userB.signer.address,
+        1,
+        fakeHash,
+        web3.utils.toWei('3.3')
+      );
   });
 
   it('should not put on sale with price higher than max based on purchase-time additional collateral', async () => {
@@ -503,8 +677,9 @@ describe.skip('Directory', () => {
         1,
         web3.utils.toWei('3.35500001')
       )
-    )
-      .to.be.revertedWith('Directory: cannot sell higher max price increase cap');
+    ).to.be.revertedWith(
+      'Directory: cannot sell higher max price increase cap'
+    );
   });
 
   it('should put on sale with maximum price based on increased collateral value', async () => {
@@ -530,13 +705,16 @@ describe.skip('Directory', () => {
     });
 
     await expect(
-      await userB.directoryContract.uniquetteForSale(
-        1,
-        web3.utils.toWei('3.3')
-      )
+      await userB.directoryContract.uniquetteForSale(1, web3.utils.toWei('3.3'))
     )
       .to.emit(userB.directoryContract, 'UniquettePutOnSale')
-      .withArgs(userB.signer.address, userB.signer.address, 1, fakeHash, web3.utils.toWei('3.3'));
+      .withArgs(
+        userB.signer.address,
+        userB.signer.address,
+        1,
+        fakeHash,
+        web3.utils.toWei('3.3')
+      );
   });
 
   it('should not put on sale with price higher than max based on increased collateral value', async () => {
@@ -566,8 +744,9 @@ describe.skip('Directory', () => {
         1,
         web3.utils.toWei('3.30000001')
       )
-    )
-      .to.be.revertedWith('Directory: cannot sell higher max price increase cap');
+    ).to.be.revertedWith(
+      'Directory: cannot sell higher max price increase cap'
+    );
   });
 
   it('should buy with same amount as sales price on secondary sales', async () => {
@@ -772,12 +951,12 @@ describe.skip('Directory', () => {
       value: web3.utils.toWei('1.05'), // ETH
     });
 
-
     await expect(
       userC.directoryContract.uniquetteCollect(userC.signer.address, 1, {
         value: web3.utils.toWei('1.05001'), // ETH
       })
-    )
-      .to.be.revertedWith('Directory: insufficient payment for sale price plus protocol fee');
+    ).to.be.revertedWith(
+      'Directory: insufficient payment for sale price plus protocol fee'
+    );
   });
 });
