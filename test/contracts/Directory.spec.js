@@ -5,6 +5,51 @@ const web3 = require('web3');
 const {setupTest} = require('../setup');
 
 describe('Directory', () => {
+  it('should create a new submission for a new uniquette', async () => {
+    const {userA} = await setupTest();
+    const fakeHash = uuid();
+
+    await expect(
+      userA.directoryContract.submissionCreate(
+        0,
+        fakeHash,
+        1, // Schema v1
+        web3.utils.toWei('1'), // ETH
+        {
+          value: web3.utils.toWei('0.1'), // ETH
+        }
+      )
+    )
+      .to.emit(userA.directoryContract, 'SubmissionCreated')
+      .withArgs(userA.signer.address, 0, fakeHash, web3.utils.toWei('1'), web3.utils.toWei('0.1'));
+  });
+
+  it('should approve a new submission for a new uniquette', async () => {
+    const {userA, governor} = await setupTest();
+    const fakeHash = uuid();
+
+    await userA.directoryContract.submissionCreate(
+      0,
+      fakeHash,
+      1, // Schema v1
+      web3.utils.toWei('1'), // ETH
+      {
+        value: web3.utils.toWei('0.1'), // ETH
+      }
+    );
+
+    await expect(
+      governor.directoryContract.submissionApprove(
+        fakeHash,
+        web3.utils.toWei('100') // UNQ
+      )
+    )
+      .to.emit(userA.directoryContract, 'SubmissionApproved')
+      .withArgs(governor.signer.address, userA.signer.address, fakeHash, web3.utils.toWei('100'));
+  });
+});
+
+describe.skip('Directory', () => {
   it('should submit a new uniquette', async () => {
     const {userA} = await setupTest();
     const fakeHash = uuid();

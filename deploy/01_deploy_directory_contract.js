@@ -18,16 +18,11 @@ module.exports = async ({getNamedAccounts, deployments}) => {
     vault.address,
     treasury.address,
     marketer.address,
-    [
-      web3.utils.toWei('1'), // initialUniquettePrice: 1 ETH
-      0, // originalAuthorShare: 0%
-      500, // protocolFee: 5%
-      web3.utils.toWei('0.1'), // submissionCollateral: 0.1 ETH
-      7890000, // firstSaleDeadline: 90 days
-      1, // currentMetadataVersion
-      1, // minMetadataVersion
-      1000, // maxPriceIncrease: 10%
-    ],
+    500, // protocolFee: 5%
+    1, // minMetadataVersion
+    1, // currentMetadataVersion
+    1000, // maxAppreciation: 10%
+    web3.utils.toWei('0.1') // submissionDeposit: 0.1 ETH
   ];
 
   await deployUpgradableContract(deployments, deployer, governor, 'Directory', contractArguments);

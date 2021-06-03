@@ -8,6 +8,8 @@ import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 
+import "hardhat/console.sol";
+
 import "./Common.sol";
 import "./Treasury.sol";
 
@@ -31,8 +33,8 @@ contract Submissions is Initializable, ContextUpgradeable, AccessControlUpgradea
         address indexed submitter,
         uint256 indexed tokenId,
         string hash,
-        uint256 deposit,
-        uint256 addedValue
+        uint256 addedValue,
+        uint256 deposit
     );
     event SubmissionUpdated(address indexed submitter, string hash, uint256 addedValue);
     event SubmissionApproved(
@@ -70,17 +72,17 @@ contract Submissions is Initializable, ContextUpgradeable, AccessControlUpgradea
         _;
     }
 
-    modifier submissionPending(string calldata hash) {
+    modifier submissionIsPending(string calldata hash) {
         require(_submissions[hash].status == SubmissionStatus.Pending, "SUBMISSIONS/NOT_PENDING");
         _;
     }
 
-    modifier submissionApproved(string calldata hash) {
+    modifier submissionIsApproved(string calldata hash) {
         require(_submissions[hash].status == SubmissionStatus.Approved, "SUBMISSIONS/NOT_APPROVED");
         _;
     }
 
-    modifier submissionUpToDate(string calldata hash) {
+    modifier submissionIsUpToDate(string calldata hash) {
         require(_submissions[hash].metadataVersion >= _minMetadataVersion, "SUBMISSIONS/OUTDATED_METADATA_VERSION");
         _;
     }
@@ -136,15 +138,15 @@ contract Submissions is Initializable, ContextUpgradeable, AccessControlUpgradea
         _submissions[hash].deposit = msg.value;
         _submissions[hash].status = SubmissionStatus.Pending;
 
-        emit SubmissionCreated(_msgSender(), tokenId, hash, msg.value, addedValue);
+        emit SubmissionCreated(_msgSender(), tokenId, hash, addedValue, msg.value);
     }
 
     function submissionUpdate(string calldata hash, uint256 addedValue)
         public
         payable
         submissionExists(hash)
-        submissionPending(hash)
-        submissionUpToDate(hash)
+        submissionIsPending(hash)
+        submissionIsUpToDate(hash)
         nonReentrant
     {
         require(
@@ -179,7 +181,7 @@ contract Submissions is Initializable, ContextUpgradeable, AccessControlUpgradea
     function submissionApprove(
         string calldata hash,
         uint256 rewardOverride
-    ) public isGovernor() submissionExists(hash) submissionPending(hash) submissionUpToDate(hash) nonReentrant {
+    ) public isGovernor() submissionExists(hash) submissionIsPending(hash) submissionIsUpToDate(hash) nonReentrant {
         _submissions[hash].reward = rewardOverride;
         _submissions[hash].status = SubmissionStatus.Approved;
 
@@ -203,7 +205,7 @@ contract Submissions is Initializable, ContextUpgradeable, AccessControlUpgradea
         public
         isGovernor()
         submissionExists(hash)
-        submissionPending(hash)
+        submissionIsPending(hash)
         nonReentrant
     {
         address originalSubmitter = _submissions[hash].author;

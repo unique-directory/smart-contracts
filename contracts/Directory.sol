@@ -8,6 +8,8 @@ import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 
+import "hardhat/console.sol";
+
 import "./Submissions.sol";
 import "./Uniquettes.sol";
 
@@ -96,26 +98,17 @@ contract Directory is ContextUpgradeable, Common, Submissions, Uniquettes {
             uint256 submissionDeposit
         )
     {
-        return (
-            _protocolFee,
-            _currentMetadataVersion,
-            _minMetadataVersion,
-            _maxAppreciation,
-            _submissionDeposit
-        );
+        return (_protocolFee, _currentMetadataVersion, _minMetadataVersion, _maxAppreciation, _submissionDeposit);
     }
 
     // We must mint a new ERC-721 token for approved submission for a new Uniquette
-    function _afterSubmissionApprove(string calldata hash)
-        internal
-        virtual
-        override(Submissions)
-        submissionApproved(hash)
-    {
+    function _afterSubmissionApprove(string memory hash) internal virtual override(Submissions) {
         if (_submissions[hash].tokenId > 0) {
-            // Skip if there already a Uniquette for this submission.
+            // Skip if there is already a Uniquette for this submission.
             return;
         }
+
+        require(_submissions[hash].status == SubmissionStatus.Approved, "DIRECTORY/SUBMISSION_NOT_APPROVED");
 
         // Mint the new uniquette into Vault
         uint256 newTokenId = uniquetteMint();
@@ -134,8 +127,8 @@ contract Directory is ContextUpgradeable, Common, Submissions, Uniquettes {
         virtual
         tokenExists(tokenId)
         submissionExists(submissionHash)
-        submissionApproved(submissionHash)
-        submissionUpToDate(submissionHash)
+        submissionIsApproved(submissionHash)
+        submissionIsUpToDate(submissionHash)
         nonReentrant
     {
         Submission memory submission = submissionGetByHash(submissionHash);
