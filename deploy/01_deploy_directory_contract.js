@@ -21,7 +21,7 @@ module.exports = async ({getNamedAccounts, deployments}) => {
     500, // protocolFee: 5%
     1, // minMetadataVersion
     1, // currentMetadataVersion
-    1000, // maxAppreciation: 10%
+    1000, // maxPriceAppreciation: 10%
     web3.utils.toWei('0.1') // submissionDeposit: 0.1 ETH
   ];
 

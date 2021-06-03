@@ -320,9 +320,9 @@ contract Uniquettes is
 
     function calculateEffectivePrice(Uniquette memory uniquette) internal view virtual returns (uint256) {
         if (uniquette.lastPurchaseAmount < uniquette.collateralValue) {
-            return uniquette.collateralValue + ((uniquette.collateralValue * _maxAppreciation) / 10000);
+            return uniquette.collateralValue + ((uniquette.collateralValue * _maxPriceAppreciation) / 10000);
         } else {
-            return uniquette.lastPurchaseAmount + ((uniquette.lastPurchaseAmount * _maxAppreciation) / 10000);
+            return uniquette.lastPurchaseAmount + ((uniquette.lastPurchaseAmount * _maxPriceAppreciation) / 10000);
         }
     }
 }

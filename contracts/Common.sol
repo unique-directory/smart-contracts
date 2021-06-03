@@ -12,21 +12,21 @@ contract Common is Initializable, ContextUpgradeable, AccessControlUpgradeable {
     uint256 internal _protocolFee;
     uint256 internal _currentMetadataVersion;
     uint256 internal _minMetadataVersion;
-    uint256 internal _maxAppreciation;
+    uint256 internal _maxPriceAppreciation;
     uint256 internal _submissionDeposit;
 
     function __Common_init(
         uint256 protocolFee,
         uint256 minMetadataVersion,
         uint256 currentMetadataVersion,
-        uint256 maxAppreciation,
+        uint256 maxPriceAppreciation,
         uint256 submissionDeposit
     ) internal initializer {
         __Common_init_unchained(
             protocolFee,
             minMetadataVersion,
             currentMetadataVersion,
-            maxAppreciation,
+            maxPriceAppreciation,
             submissionDeposit
         );
     }
@@ -35,13 +35,13 @@ contract Common is Initializable, ContextUpgradeable, AccessControlUpgradeable {
         uint256 protocolFee,
         uint256 minMetadataVersion,
         uint256 currentMetadataVersion,
-        uint256 maxAppreciation,
+        uint256 maxPriceAppreciation,
         uint256 submissionDeposit
     ) internal initializer {
         _protocolFee = protocolFee;
         _minMetadataVersion = minMetadataVersion;
         _currentMetadataVersion = currentMetadataVersion;
-        _maxAppreciation = maxAppreciation;
+        _maxPriceAppreciation = maxPriceAppreciation;
         _submissionDeposit = submissionDeposit;
 
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
@@ -71,8 +71,8 @@ contract Common is Initializable, ContextUpgradeable, AccessControlUpgradeable {
         _currentMetadataVersion = newValue;
     }
 
-    function setMaxAppreciation(uint256 newValue) public isGovernor() {
-        _maxAppreciation = newValue;
+    function setMaxPriceAppreciation(uint256 newValue) public isGovernor() {
+        _maxPriceAppreciation = newValue;
     }
 
     function setSubmissionDeposit(uint256 newValue) public isGovernor() {

@@ -39,14 +39,14 @@ contract Directory is ContextUpgradeable, Common, Submissions, Uniquettes {
         uint256 protocolFee,
         uint256 minMetadataVersion,
         uint256 currentMetadataVersion,
-        uint256 maxAppreciation,
+        uint256 maxPriceAppreciation,
         uint256 submissionDeposit
     ) public initializer {
         __Common_init_unchained(
             protocolFee,
             minMetadataVersion,
             currentMetadataVersion,
-            maxAppreciation,
+            maxPriceAppreciation,
             submissionDeposit
         );
         __Uniquettes_init_unchained(name, symbol, token, vault, treasury, marketer);
@@ -95,11 +95,15 @@ contract Directory is ContextUpgradeable, Common, Submissions, Uniquettes {
             uint256 protocolFee,
             uint256 currentMetadataVersion,
             uint256 minMetadataVersion,
-            uint256 maxAppreciation,
+            uint256 maxPriceAppreciation,
             uint256 submissionDeposit
         )
     {
-        return (_protocolFee, _currentMetadataVersion, _minMetadataVersion, _maxAppreciation, _submissionDeposit);
+        return (_protocolFee, _currentMetadataVersion, _minMetadataVersion, _maxPriceAppreciation, _submissionDeposit);
+    }
+
+    function uniquetteGetFundedSubmission(uint256 tokenId) public view virtual returns (string memory) {
+        return _fundedSubmissionHashByUniquetteTokenId[tokenId];
     }
 
     // We must mint a new ERC-721 token for approved submission for a new Uniquette
