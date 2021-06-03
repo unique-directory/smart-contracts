@@ -4,14 +4,14 @@ const web3 = require('web3');
 
 const {setupTest} = require('../setup');
 
-function calculateRequiredPayment(etherEffectivePrice, additionalCollateral) {
+function calculateRequiredPayment(effectivePriceEth, additionalCollateralEth) {
   const effectivePriceBN = web3.utils.toBN(
-    web3.utils.toWei(etherEffectivePrice)
+    web3.utils.toWei(effectivePriceEth)
   );
-  const principalAmount = !additionalCollateral
+  const principalAmount = !additionalCollateralEth
     ? effectivePriceBN
     : effectivePriceBN.add(
-        web3.utils.toBN(web3.utils.toWei(additionalCollateral))
+        web3.utils.toBN(web3.utils.toWei(additionalCollateralEth))
       );
 
   const hundredPercentBN = web3.utils.toBN(10000);
@@ -98,20 +98,13 @@ describe('Directory', () => {
       web3.utils.toWei('100') // UNQ - reward
     );
 
-    const effectivePriceBN = web3.utils.toBN(web3.utils.toWei('1'));
-    const hundredPercentBN = web3.utils.toBN(10000);
-    const protocolFeePercentBN = web3.utils.toBN(500);
-    const requiredPaymentBN = effectivePriceBN
-      .muln(10000)
-      .div(hundredPercentBN.sub(protocolFeePercentBN));
-
     await expect(
       userB.directoryContract.fund(
         userB.signer.address,
         1, // Token ID
         fakeHash,
         {
-          value: requiredPaymentBN.toString(), // ETH : valueAdded + fee
+          value: calculateRequiredPayment('1').toString(), // ETH : valueAdded + fee
         }
       )
     )
@@ -129,6 +122,54 @@ describe('Directory', () => {
     );
 
     expect(uniquette.collateralValue.toString()).eq('0');
+  });
+
+  it('should fund a new submission for a new uniquette with some additional collateral', async () => {
+    const {userA, userB, governor} = await setupTest();
+    const fakeHash = uuid();
+
+    await userA.directoryContract.submissionCreate(
+      0,
+      fakeHash,
+      1, // Schema v1
+      web3.utils.toWei('1'), // ETH - valueAdded
+      {
+        value: web3.utils.toWei('0.1'), // ETH
+      }
+    );
+
+    await governor.directoryContract.submissionApprove(
+      fakeHash,
+      web3.utils.toWei('100') // UNQ - reward
+    );
+
+    await expect(
+      userB.directoryContract.fund(
+        userB.signer.address,
+        1, // Token ID
+        fakeHash,
+        {
+          value: calculateRequiredPayment('1', '2').toString(), // ETH : valueAdded + fee
+        }
+      )
+    )
+      .to.emit(userA.directoryContract, 'SubmissionFunded')
+      .withArgs(
+        userB.signer.address,
+        userB.signer.address,
+        1,
+        fakeHash,
+        web3.utils.toWei('1'),
+        web3.utils.toWei('3.157894736842105263')
+      );
+
+    const uniquette = await userB.directoryContract.uniquetteGetById(
+      1 // Token ID
+    );
+
+    expect(uniquette.collateralValue.toString()).eq(
+      web3.utils.toWei('3') // ETH
+    );
   });
 
   it('should collect an existing uniquette with no additional collateral', async () => {

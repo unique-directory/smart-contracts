@@ -248,7 +248,17 @@ contract Uniquettes is
         address to,
         uint256 tokenId,
         uint256 addedValue
-    ) internal virtual tokenExists(tokenId) {
+    )
+        internal
+        virtual
+        tokenExists(tokenId)
+        returns (
+            uint256 effectivePrice,
+            uint256 appreciatedPrice,
+            uint256 principalAmount,
+            uint256 protocolFeeAmount
+        )
+    {
         require(to != address(0), "UNIQUETTES/COLLECT_TO_ZERO_ADDR");
 
         Uniquette memory uniquette = uniquetteGetById(tokenId);
@@ -258,14 +268,13 @@ contract Uniquettes is
 
         address seller = uniquette.owner;
 
-        uint256 effectivePrice = calculateEffectivePrice(uniquette);
+        effectivePrice = calculateEffectivePrice(uniquette);
         console.log("effectivePrice = %s", effectivePrice);
-        uint256 protocolFeeAmount = (msg.value * _protocolFee) / 10000;
+        protocolFeeAmount = (msg.value * _protocolFee) / 10000;
         console.log("protocolFeeAmount = %s", protocolFeeAmount);
-
-        uint256 principalAmount = msg.value - protocolFeeAmount;
+        principalAmount = msg.value - protocolFeeAmount;
         console.log("principalAmount = %s", principalAmount);
-        uint256 appreciatedPrice = effectivePrice + addedValue;
+        appreciatedPrice = effectivePrice + addedValue;
         console.log("appreciatedPrice = %s", appreciatedPrice);
 
         require(principalAmount >= appreciatedPrice, "UNIQUETTES/NOT_ENOUGH_PRINCIPAL");
@@ -300,6 +309,13 @@ contract Uniquettes is
             payable(address(_vault)).sendValue(additionalCollateral);
             emit UniquetteCollateralIncreased(operator, to, tokenId, additionalCollateral);
         }
+
+        return (
+            effectivePrice,
+            appreciatedPrice,
+            principalAmount,
+            protocolFeeAmount
+        );
     }
 
     function calculateEffectivePrice(Uniquette memory uniquette) internal view virtual returns (uint256) {
