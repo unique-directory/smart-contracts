@@ -261,6 +261,9 @@ contract Uniquettes is
         uint256 protocolFeeAmount = (msg.value * _protocolFee) / 10000;
         uint256 principalAmount = msg.value - protocolFeeAmount;
         uint256 appreciatedPrice = effectivePrice + addedValue;
+
+        require(principalAmount >= appreciatedPrice, "UNIQUETTES/NOT_ENOUGH_PRINCIPAL");
+
         uint256 additionalCollateral = principalAmount - appreciatedPrice;
 
         require(principalAmount >= appreciatedPrice, "UNIQUETTES/NOT_ENOUGH_PRINCIPAL");
@@ -283,8 +286,10 @@ contract Uniquettes is
         payable(address(_treasury)).sendValue(protocolFeeAmount);
         emit ProtocolFeePaid(operator, seller, to, tokenId, protocolFeeAmount);
 
-        payable(address(_vault)).sendValue(additionalCollateral);
-        emit UniquetteCollateralIncreased(operator, to, tokenId, additionalCollateral);
+        if (additionalCollateral > 0) {
+            payable(address(_vault)).sendValue(additionalCollateral);
+            emit UniquetteCollateralIncreased(operator, to, tokenId, additionalCollateral);
+        }
     }
 
     function calculateEffectivePrice(Uniquette memory uniquette) internal view virtual returns (uint256) {

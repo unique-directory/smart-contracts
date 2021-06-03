@@ -134,6 +134,8 @@ contract Directory is ContextUpgradeable, Common, Submissions, Uniquettes {
         Submission memory submission = submissionGetByHash(submissionHash);
         address operator = _msgSender();
 
+        require(submission.tokenId == tokenId, "DIRECTORY/INVALID_SUBMISSION_FOR_UNIQUETTE");
+
         uniquetteTakeOver(operator, to, tokenId, submission.addedValue);
 
         _fundedSubmissionHashByUniquetteTokenId[tokenId] = submissionHash;
@@ -142,6 +144,8 @@ contract Directory is ContextUpgradeable, Common, Submissions, Uniquettes {
     }
 
     function collect(address to, uint256 tokenId) public payable virtual tokenExists(tokenId) nonReentrant {
+        require(bytes(_fundedSubmissionHashByUniquetteTokenId[tokenId]).length > 0, "DIRECTORY/NO_SUBMISSION_FUNDED_FOR_UNIQUETTE");
+
         return uniquetteTakeOver(_msgSender(), to, tokenId, 0);
     }
 }
