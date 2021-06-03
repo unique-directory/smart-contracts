@@ -8,6 +8,7 @@ import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradea
 
 import "./PaymentRecipient.sol";
 import "./Directory.sol";
+import "./Uniquettes.sol";
 
 contract Vault is
     ReentrancyGuardUpgradeable,
@@ -66,8 +67,7 @@ contract Vault is
     function uniquetteLiquidate(uint256 tokenId, address payable beneficiary) public virtual nonReentrant {
         address operator = _msgSender();
 
-        string memory hash = _directory.uniquetteHashById(tokenId);
-        Directory.Uniquette memory uniquette = _directory.uniquetteGetByHash(hash);
+        Uniquettes.Uniquette memory uniquette = _directory.uniquetteGetById(tokenId);
 
         require(
             uniquette.owner == operator || _directory.isApprovedForAll(uniquette.owner, operator),
@@ -77,7 +77,7 @@ contract Vault is
         _directory.safeTransferFrom(uniquette.owner, address(this), tokenId);
         payable(address(beneficiary)).transfer(uniquette.collateralValue);
 
-        _directory.uniquetteForSale(tokenId, uniquette.collateralValue);
+        //_directory.uniquetteForSale(tokenId, uniquette.collateralValue); TODO Allow to collect by paying just collateral value
 
         emit UniquetteLiquidated(operator, uniquette.owner, beneficiary, tokenId, uniquette.collateralValue);
     }
