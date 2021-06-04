@@ -1,26 +1,10 @@
+
 const {expect} = require('chai');
 const {v4: uuid} = require('uuid');
 const web3 = require('web3');
 
 const {setupTest} = require('../setup');
-
-function calculateRequiredPayment(effectivePriceEth, additionalCollateralEth) {
-  const effectivePriceBN = web3.utils.toBN(web3.utils.toWei(effectivePriceEth));
-  const principalAmount = !additionalCollateralEth
-    ? effectivePriceBN
-    : effectivePriceBN.add(
-        web3.utils.toBN(web3.utils.toWei(additionalCollateralEth))
-      );
-
-  const hundredPercentBN = web3.utils.toBN(10000);
-  const protocolFeePercentBN = web3.utils.toBN(500);
-
-  const requiredAmountBN = principalAmount
-    .muln(10000)
-    .div(hundredPercentBN.sub(protocolFeePercentBN));
-
-  return requiredAmountBN;
-}
+const {calculateRequiredPayment} = require('../util');
 
 describe('Directory', () => {
   it('should create a new submission for a new uniquette', async () => {

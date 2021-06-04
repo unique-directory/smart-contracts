@@ -3,26 +3,36 @@ const {v4: uuid} = require('uuid');
 const web3 = require('web3');
 
 const {setupTest} = require('../setup');
+const {calculateRequiredPayment} = require('../util');
 
 describe('Vault', () => {
   it('should liquidate a uniquette and pay the owner', async () => {
-    const {governor, userA, userB, userC} = await setupTest();
+    const {userA, userB, userC, governor} = await setupTest();
     const fakeHash = uuid();
 
-    await userA.directoryContract.uniquetteSubmit(
+    await userA.directoryContract.submissionCreate(
+      0,
       fakeHash,
       1, // Schema v1
+      web3.utils.toWei('1'), // ETH - valueAdded
       {
         value: web3.utils.toWei('0.1'), // ETH
       }
     );
-    await governor.directoryContract.uniquetteApprove(
+
+    await governor.directoryContract.submissionApprove(
       fakeHash,
-      web3.utils.toWei('5000')
+      web3.utils.toWei('100') // UNQ - reward
     );
-    await userB.directoryContract.uniquetteCollect(userB.signer.address, 1, {
-      value: web3.utils.toWei('1.05'), // ETH
-    });
+
+    await userB.directoryContract.fund(
+      userB.signer.address,
+      1, // Token ID
+      fakeHash,
+      {
+        value: calculateRequiredPayment('1').toString(), // ETH : valueAdded + fee
+      }
+    );
 
     await expect(
       await userB.vaultContract.uniquetteLiquidate(1, userB.signer.address)
@@ -56,26 +66,35 @@ describe('Vault', () => {
     const {governor, userA, userB, userC} = await setupTest();
     const fakeHash = uuid();
 
-    await userA.directoryContract.uniquetteSubmit(
+    await userA.directoryContract.submissionCreate(
+      0,
       fakeHash,
       1, // Schema v1
+      web3.utils.toWei('1'), // ETH - valueAdded
       {
         value: web3.utils.toWei('0.1'), // ETH
       }
     );
-    await governor.directoryContract.uniquetteApprove(
+
+    await governor.directoryContract.submissionApprove(
       fakeHash,
-      web3.utils.toWei('5000')
+      web3.utils.toWei('100') // UNQ - reward
     );
-    await userB.directoryContract.uniquetteCollect(userB.signer.address, 1, {
-      value: web3.utils.toWei('1.05'),
-    });
+
+    await userB.directoryContract.fund(
+      userB.signer.address,
+      1, // Token ID
+      fakeHash,
+      {
+        value: calculateRequiredPayment('1').toString(),
+      }
+    );
 
     await userB.vaultContract.uniquetteLiquidate(1, userB.signer.address);
 
     await expect(
-      await userC.directoryContract.uniquetteCollect(userC.signer.address, 1, {
-        value: web3.utils.toWei('1.05'), // ETH
+      await userC.directoryContract.collect(userC.signer.address, 1, {
+        value: calculateRequiredPayment('1.1').toString(),
       })
     ).to.changeEtherBalances(
       [
@@ -90,11 +109,11 @@ describe('Vault', () => {
       [
         web3.utils.toWei('0'),
         web3.utils.toWei('0'),
-        web3.utils.toWei('1'),
-        web3.utils.toWei('0.05'),
+        web3.utils.toWei('1.1'),
+        web3.utils.toWei('0.057894736842105263'),
         web3.utils.toWei('0'),
         web3.utils.toWei('0'),
-        web3.utils.toWei('-1.05'),
+        web3.utils.toWei('-1.157894736842105263'),
       ]
     );
 
@@ -107,25 +126,34 @@ describe('Vault', () => {
     const {governor, userA, userB, userC} = await setupTest();
     const fakeHash = uuid();
 
-    await userA.directoryContract.uniquetteSubmit(
+    await userA.directoryContract.submissionCreate(
+      0,
       fakeHash,
       1, // Schema v1
+      web3.utils.toWei('1'), // ETH - valueAdded
       {
         value: web3.utils.toWei('0.1'), // ETH
       }
     );
-    await governor.directoryContract.uniquetteApprove(
+
+    await governor.directoryContract.submissionApprove(
       fakeHash,
-      web3.utils.toWei('5000')
+      web3.utils.toWei('100') // UNQ - reward
     );
-    await userB.directoryContract.uniquetteCollect(userB.signer.address, 1, {
-      value: web3.utils.toWei('1.05'), // ETH
-    });
+
+    await userB.directoryContract.fund(
+      userB.signer.address,
+      1, // Token ID
+      fakeHash,
+      {
+        value: calculateRequiredPayment('1').toString(), // ETH : valueAdded + fee
+      }
+    );
 
     await userB.vaultContract.uniquetteLiquidate(1, userB.signer.address);
 
-    await userC.directoryContract.uniquetteCollect(userC.signer.address, 1, {
-      value: web3.utils.toWei('1.05'),
+    await userC.directoryContract.collect(userC.signer.address, 1, {
+      value: calculateRequiredPayment('1.1').toString(),
     });
 
     await expect(

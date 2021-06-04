@@ -265,8 +265,6 @@ contract Uniquettes is
 
         require(msg.value > 0, "UNIQUETTES/PAYMENT_REQUIRED");
 
-        address seller = uniquette.owner;
-
         effectivePrice = calculateEffectivePrice(uniquette);
         protocolFeeAmount = (msg.value * _protocolFee) / 10000;
         principalAmount = msg.value - protocolFeeAmount;
@@ -286,7 +284,9 @@ contract Uniquettes is
         // Remember last amount this uniquette was sold for
         _uniquettes[tokenId].lastPurchaseAmount = principalAmount;
 
-        // Transfer ownership of uniquette in ERC-721 fashion
+        // Transfer ownership of uniquette in ERC-721 fashion (and remember the seller)
+        address seller = uniquette.owner;
+
         _approve(operator, tokenId);
         _transfer(seller, to, tokenId);
         emit UniquetteCollected(operator, seller, to, tokenId, appreciatedPrice);
@@ -295,7 +295,7 @@ contract Uniquettes is
         payable(address(_treasury)).sendValue(protocolFeeAmount);
         emit ProtocolFeePaid(operator, seller, to, tokenId, protocolFeeAmount);
 
-        // Pay the current owner
+        // Pay the previous owner (seller)
         payable(address(seller)).sendValue(effectivePrice);
 
         if (additionalCollateral > 0) {
