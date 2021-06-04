@@ -268,6 +268,8 @@ describe('Directory', () => {
         userB.signer.address,
         userC.signer.address,
         1,
+        web3.utils.toWei('1.1'),
+        web3.utils.toWei('1.1'),
         web3.utils.toWei('1.1')
       );
 
@@ -329,7 +331,9 @@ describe('Directory', () => {
         userB.signer.address,
         userC.signer.address,
         1,
-        web3.utils.toWei('1.1')
+        web3.utils.toWei('1.1'),
+        web3.utils.toWei('1.1'),
+        web3.utils.toWei('3.1')
       );
 
     const uniquetteAfterCollect =
@@ -859,6 +863,8 @@ describe('Directory', () => {
         userB.signer.address,
         userC.signer.address,
         1,
+        web3.utils.toWei('4.4'),
+        web3.utils.toWei('4.4'),
         web3.utils.toWei('4.4')
       );
 

@@ -110,10 +110,10 @@ describe('Vault', () => {
         web3.utils.toWei('0'),
         web3.utils.toWei('0'),
         web3.utils.toWei('1.1'),
-        web3.utils.toWei('0.057894736842105263'),
+        web3.utils.toWei('0.055'),
         web3.utils.toWei('0'),
         web3.utils.toWei('0'),
-        web3.utils.toWei('-1.157894736842105263'),
+        web3.utils.toWei('-1.155'),
       ]
     );
 

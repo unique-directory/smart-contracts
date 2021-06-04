@@ -45,7 +45,9 @@ contract Uniquettes is
         address indexed seller,
         address indexed collector,
         uint256 indexed tokenId,
-        uint256 price
+        uint256 effectivePrice,
+        uint256 appreciatedPrice,
+        uint256 principalAmount
     );
     event UniquetteCollateralIncreased(
         address indexed operator,
@@ -289,7 +291,7 @@ contract Uniquettes is
 
         _approve(operator, tokenId);
         _transfer(seller, to, tokenId);
-        emit UniquetteCollected(operator, seller, to, tokenId, appreciatedPrice);
+        emit UniquetteCollected(operator, seller, to, tokenId, effectivePrice, appreciatedPrice, principalAmount);
 
         // Pay the protocol fee, move the collateral to Vault, pay the seller
         payable(address(_treasury)).sendValue(protocolFeeAmount);
