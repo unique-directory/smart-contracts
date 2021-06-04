@@ -303,7 +303,7 @@ contract Uniquettes is
         emit ProtocolFeePaid(operator, seller, to, tokenId, protocolFeeAmount);
 
         // Pay the current owner
-        payable(address(_uniquettes[tokenId].owner)).sendValue(effectivePrice);
+        payable(address(seller)).sendValue(effectivePrice);
 
         if (additionalCollateral > 0) {
             payable(address(_vault)).sendValue(additionalCollateral);

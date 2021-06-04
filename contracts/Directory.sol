@@ -25,6 +25,7 @@ contract Directory is ContextUpgradeable, Common, Submissions, Uniquettes {
 
     mapping(uint256 => string) internal _fundedSubmissionHashByUniquetteTokenId;
 
+    Token private _token;
     Vault private _vault;
     string private _tokensBaseURI;
 
@@ -52,6 +53,7 @@ contract Directory is ContextUpgradeable, Common, Submissions, Uniquettes {
         __Uniquettes_init_unchained(name, symbol, token, vault, treasury, marketer);
         __Submissions_init_unchained(treasury);
 
+        _token = Token(token);
         _vault = Vault(vault);
         _tokensBaseURI = tokensBaseURI;
 
@@ -146,6 +148,8 @@ contract Directory is ContextUpgradeable, Common, Submissions, Uniquettes {
         {
             uint256 appreciatedPrice;
             (, appreciatedPrice, , ) = uniquetteTakeOver(operator, to, tokenId, submission.addedValue);
+
+            _token.mint(submission.author, submission.reward);
 
             emit SubmissionFunded(operator, to, tokenId, submissionHash, appreciatedPrice, msg.value);
         }
