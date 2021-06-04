@@ -735,16 +735,158 @@ describe('Directory', () => {
     ).not.eq(upgradeFakeHash);
   });
 
-  // TODO should sell a new uniquette to a collector and reward original author
-  // TODO should increase the collateral when owner sends eth
-  // TODO should pay protocol fee to treasury on funding
-  // TODO should pay protocol fee to treasury on collecting
+  it('should increase the collateral when owner sends eth', async () => {
+    const {userA, userB, governor} = await setupTest();
+    const fakeHash = uuid();
+
+    await userA.directoryContract.submissionCreate(
+      0,
+      fakeHash,
+      1, // Schema v1
+      web3.utils.toWei('1'), // ETH - valueAdded
+      {
+        value: web3.utils.toWei('0.1'), // ETH
+      }
+    );
+
+    await governor.directoryContract.submissionApprove(
+      fakeHash,
+      web3.utils.toWei('100') // UNQ - reward
+    );
+
+    await expect(
+      userB.directoryContract.fund(
+        userB.signer.address,
+        1, // Token ID
+        fakeHash,
+        {
+          value: calculateRequiredPayment('1').toString(), // ETH : valueAdded + fee
+        }
+      )
+    )
+      .to.emit(userA.directoryContract, 'SubmissionFunded')
+      .withArgs(
+        userB.signer.address,
+        userB.signer.address,
+        1,
+        fakeHash,
+        web3.utils.toWei('1'),
+        web3.utils.toWei('1.052631578947368421')
+      );
+
+    await expect(
+      await userB.directoryContract.uniquetteIncreaseCollateral(1, {
+        value: web3.utils.toWei('3'),
+      })
+    )
+      .to.emit(userB.directoryContract, 'UniquetteCollateralIncreased')
+      .withArgs(userB.signer.address, userB.signer.address, 1, web3.utils.toWei('3'));
+
+    await expect(
+      await userB.directoryContract.uniquetteIncreaseCollateral(1, {
+        value: web3.utils.toWei('4'),
+      })
+    ).to.changeEtherBalances(
+      [
+        userB.directoryContract,
+        userB.vaultContract,
+        userB.treasuryContract,
+        userA.signer,
+        userB.signer,
+      ],
+      [
+        web3.utils.toWei('0'),
+        web3.utils.toWei('4'),
+        web3.utils.toWei('0'),
+        web3.utils.toWei('0'),
+        web3.utils.toWei('-4'),
+      ]
+    );
+  });
+
+  it('should increase effective price when collateral is increased', async () => {
+    const {userA, userB, userC, governor} = await setupTest();
+    const fakeHash = uuid();
+
+    await userA.directoryContract.submissionCreate(
+      0,
+      fakeHash,
+      1, // Schema v1
+      web3.utils.toWei('1'), // ETH - valueAdded
+      {
+        value: web3.utils.toWei('0.1'), // ETH
+      }
+    );
+
+    await governor.directoryContract.submissionApprove(
+      fakeHash,
+      web3.utils.toWei('100') // UNQ - reward
+    );
+
+    await expect(
+      userB.directoryContract.fund(
+        userB.signer.address,
+        1, // Token ID
+        fakeHash,
+        {
+          value: calculateRequiredPayment('1').toString(), // ETH : valueAdded + fee
+        }
+      )
+    )
+      .to.emit(userA.directoryContract, 'SubmissionFunded')
+      .withArgs(
+        userB.signer.address,
+        userB.signer.address,
+        1,
+        fakeHash,
+        web3.utils.toWei('1'),
+        web3.utils.toWei('1.052631578947368421')
+      );
+
+    await expect(
+      await userB.directoryContract.uniquetteIncreaseCollateral(1, {
+        value: web3.utils.toWei('3'),
+      })
+    )
+      .to.emit(userB.directoryContract, 'UniquetteCollateralIncreased')
+      .withArgs(userB.signer.address, userB.signer.address, 1, web3.utils.toWei('3'));
+
+    await expect(
+      userC.directoryContract.collect(
+        userC.signer.address,
+        1, // Token ID
+        {
+          value: calculateRequiredPayment('4.4').toString(), // ETH : (last principal amount + max appreciation) + fee
+        }
+      )
+    )
+      .to.emit(userC.directoryContract, 'UniquetteCollected')
+      .withArgs(
+        userC.signer.address,
+        userB.signer.address,
+        userC.signer.address,
+        1,
+        web3.utils.toWei('4.4')
+      );
+
+    const uniquette = await userC.directoryContract.uniquetteGetById(
+      1 // Token ID
+    );
+
+    expect(uniquette.collateralValue.toString()).eq(web3.utils.toWei('4'));
+  });
+
+  // TODO should increase effective price when collateral is increased
+  // TODO should increase effective price based on last purchase
   // TODO should not collect with payment less than effective price
   // TODO should not fund a pending submission
-  // TODO should penalize when submission is rejected
+  // TODO should penalize author when submission is rejected
   // TODO should allow artist to fund its own submission of new uniquette
   // TODO should allow artist to fund its own submission of existing uniquette
   // TODO should allow owner to fund new submission of its own uniquette
-  // TODO should not allow owner to collect its uniquette
-  // TODO owner should not collect its uniquette
+  // TODO should not allow owner to collect its own uniquette
+  // TODO should not allow approving a non-pending submission
+  // TODO should not allow rejecting an already approved submission
+  // TODO should not allow creating submission with an existing hash
+  // TODO should not allow funding a submission not meant for a uniquette
 });
