@@ -1,4 +1,3 @@
-
 const {expect} = require('chai');
 const {v4: uuid} = require('uuid');
 const web3 = require('web3');
@@ -116,7 +115,7 @@ describe('Directory', () => {
         1,
         fakeHash,
         web3.utils.toWei('1'),
-        web3.utils.toWei('1.052631578947368421')
+        web3.utils.toWei('1.05')
       );
 
     const uniquette = await userB.directoryContract.uniquetteGetById(
@@ -165,9 +164,9 @@ describe('Directory', () => {
       [
         web3.utils.toWei('0'),
         web3.utils.toWei('1'),
-        web3.utils.toWei('0.052631578947368421'),
+        web3.utils.toWei('0.05'),
         web3.utils.toWei('0'),
-        web3.utils.toWei('-1.052631578947368421'),
+        web3.utils.toWei('-1.05'),
       ]
     );
 
@@ -214,7 +213,7 @@ describe('Directory', () => {
         1,
         fakeHash,
         web3.utils.toWei('1'),
-        web3.utils.toWei('3.157894736842105263')
+        web3.utils.toWei('3.05')
       );
 
     const uniquette = await userB.directoryContract.uniquetteGetById(
@@ -541,7 +540,7 @@ describe('Directory', () => {
         1,
         upgradeFakeHash,
         web3.utils.toWei('1.6'),
-        web3.utils.toWei('1.684210526315789473')
+        web3.utils.toWei('1.68')
       );
 
     await expect(
@@ -624,11 +623,11 @@ describe('Directory', () => {
       [
         web3.utils.toWei('0'),
         web3.utils.toWei('0.5'),
-        web3.utils.toWei('0.084210526315789473'),
+        web3.utils.toWei('0.08'),
         web3.utils.toWei('0'),
         web3.utils.toWei('1.1'),
         web3.utils.toWei('0'),
-        web3.utils.toWei('-1.684210526315789473'),
+        web3.utils.toWei('-1.68'),
       ]
     );
 
@@ -709,7 +708,7 @@ describe('Directory', () => {
         1,
         upgradeFakeHash,
         web3.utils.toWei('1.6'),
-        web3.utils.toWei('3.789473684210526315')
+        web3.utils.toWei('3.68')
       );
 
     await expect(
@@ -755,7 +754,7 @@ describe('Directory', () => {
         1,
         fakeHash,
         web3.utils.toWei('1'),
-        web3.utils.toWei('1.052631578947368421')
+        web3.utils.toWei('1.05')
       );
 
     await expect(
@@ -829,7 +828,7 @@ describe('Directory', () => {
         1,
         fakeHash,
         web3.utils.toWei('1'),
-        web3.utils.toWei('1.052631578947368421')
+        web3.utils.toWei('1.05')
       );
 
     await expect(
@@ -931,11 +930,11 @@ describe('Directory', () => {
       [
         web3.utils.toWei('0'),
         web3.utils.toWei('0'),
-        web3.utils.toWei('0.254736842105263157'),
+        web3.utils.toWei('0.242'),
         web3.utils.toWei('0'),
         web3.utils.toWei('0'),
         web3.utils.toWei('4.84'),
-        web3.utils.toWei('-5.094736842105263157'),
+        web3.utils.toWei('-5.082'),
       ]
     );
   });
@@ -1272,7 +1271,7 @@ describe('Directory', () => {
         1,
         fakeHash,
         web3.utils.toWei('1'),
-        web3.utils.toWei('1.052631578947368421')
+        web3.utils.toWei('1.05')
       );
 
     const uniquette = await userA.directoryContract.uniquetteGetById(
@@ -1350,7 +1349,7 @@ describe('Directory', () => {
         1,
         upgradeFakeHash,
         web3.utils.toWei('1.6'),
-        web3.utils.toWei('1.684210526315789473')
+        web3.utils.toWei('1.68')
       );
 
     await expect(
@@ -1428,7 +1427,7 @@ describe('Directory', () => {
         1,
         upgradeFakeHash,
         web3.utils.toWei('1.6'),
-        web3.utils.toWei('1.684210526315789473')
+        web3.utils.toWei('1.68')
       );
 
     await expect(

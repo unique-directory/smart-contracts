@@ -151,6 +151,8 @@ contract Directory is ContextUpgradeable, Common, Submissions, Uniquettes {
             (, appreciatedPrice, , ) = uniquetteTakeOver(_msgSender(), to, tokenId, submission.addedValue);
 
             _token.mint(submission.author, submission.reward);
+            console.log('appreciatedPrice %s', appreciatedPrice);
+            console.log('msg.value %s', msg.value);
             emit SubmissionFunded(_msgSender(), to, tokenId, submissionHash, appreciatedPrice, msg.value);
         }
     }

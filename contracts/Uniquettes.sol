@@ -266,9 +266,9 @@ contract Uniquettes is
         require(msg.value > 0, "UNIQUETTES/PAYMENT_REQUIRED");
 
         effectivePrice = calculateEffectivePrice(uniquette);
-        protocolFeeAmount = (msg.value * _protocolFee) / 10000;
-        principalAmount = msg.value - protocolFeeAmount;
         appreciatedPrice = effectivePrice + addedValue;
+        protocolFeeAmount = (appreciatedPrice * _protocolFee) / 10000;
+        principalAmount = msg.value - protocolFeeAmount;
 
         require(principalAmount >= appreciatedPrice, "UNIQUETTES/NOT_ENOUGH_PRINCIPAL");
 
