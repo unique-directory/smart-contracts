@@ -139,19 +139,19 @@ contract Directory is ContextUpgradeable, Common, Submissions, Uniquettes {
         nonReentrant
     {
         Submission memory submission = submissionGetByHash(submissionHash);
-        address operator = _msgSender();
 
-        require(submission.tokenId == tokenId, "DIRECTORY/INVALID_SUBMISSION_FOR_UNIQUETTE");
-
-        _fundedSubmissionHashByUniquetteTokenId[tokenId] = submissionHash;
+        {
+            require(submission.tokenId == tokenId, "DIRECTORY/INVALID_SUBMISSION_FOR_UNIQUETTE");
+            _fundedSubmissionHashByUniquetteTokenId[tokenId] = submissionHash;
+            _markSubmissionAsFunded(submissionHash);
+        }
 
         {
             uint256 appreciatedPrice;
-            (, appreciatedPrice, , ) = uniquetteTakeOver(operator, to, tokenId, submission.addedValue);
+            (, appreciatedPrice, , ) = uniquetteTakeOver(_msgSender(), to, tokenId, submission.addedValue);
 
             _token.mint(submission.author, submission.reward);
-
-            emit SubmissionFunded(operator, to, tokenId, submissionHash, appreciatedPrice, msg.value);
+            emit SubmissionFunded(_msgSender(), to, tokenId, submissionHash, appreciatedPrice, msg.value);
         }
     }
 

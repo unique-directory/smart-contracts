@@ -263,26 +263,19 @@ contract Uniquettes is
 
         Uniquette memory uniquette = uniquetteGetById(tokenId);
 
-        console.log("msg.value = %s", msg.value);
         require(msg.value > 0, "UNIQUETTES/PAYMENT_REQUIRED");
 
         address seller = uniquette.owner;
 
         effectivePrice = calculateEffectivePrice(uniquette);
-        console.log("effectivePrice = %s", effectivePrice);
         protocolFeeAmount = (msg.value * _protocolFee) / 10000;
-        console.log("protocolFeeAmount = %s", protocolFeeAmount);
         principalAmount = msg.value - protocolFeeAmount;
-        console.log("principalAmount = %s", principalAmount);
         appreciatedPrice = effectivePrice + addedValue;
-        console.log("appreciatedPrice = %s", appreciatedPrice);
 
         require(principalAmount >= appreciatedPrice, "UNIQUETTES/NOT_ENOUGH_PRINCIPAL");
 
         uint256 additionalCollateral = principalAmount - effectivePrice;
-        console.log("additionalCollateral = %s", additionalCollateral);
 
-        require(principalAmount >= appreciatedPrice, "UNIQUETTES/NOT_ENOUGH_PRINCIPAL");
         require(protocolFeeAmount > 0, "UNIQUETTES/UNEXPECTED_ZERO_FEE");
         require(appreciatedPrice >= effectivePrice, "UNIQUETTES/UNEXPECTED_DEPRECIATED_PRICE");
         require(additionalCollateral <= msg.value, "UNIQUETTES/UNEXPECTED_EXCESS_COLLATERAL");

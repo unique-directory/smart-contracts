@@ -82,6 +82,11 @@ contract Submissions is Initializable, ContextUpgradeable, AccessControlUpgradea
         _;
     }
 
+    modifier submissionIsNotFunded(string calldata hash) {
+        require(_submissions[hash].status != SubmissionStatus.Funded, "SUBMISSIONS/IS_FUNDED");
+        _;
+    }
+
     modifier submissionIsUpToDate(string calldata hash) {
         require(_submissions[hash].metadataVersion >= _minMetadataVersion, "SUBMISSIONS/OUTDATED_METADATA_VERSION");
         _;
@@ -216,5 +221,9 @@ contract Submissions is Initializable, ContextUpgradeable, AccessControlUpgradea
         payable(address(_treasury)).sendValue(submissionDeposit);
 
         emit SubmissionRejected(_msgSender(), originalSubmitter, hash);
+    }
+
+    function _markSubmissionAsFunded(string calldata hash) submissionExists(hash) submissionIsNotFunded(hash) internal virtual {
+        _submissions[hash].status = SubmissionStatus.Funded;
     }
 }
