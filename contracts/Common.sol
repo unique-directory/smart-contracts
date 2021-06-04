@@ -78,4 +78,22 @@ contract Common is Initializable, ContextUpgradeable, AccessControlUpgradeable {
     function setSubmissionDeposit(uint256 newValue) public isGovernor() {
         _submissionDeposit = newValue;
     }
+
+    //
+    // Public
+    //
+    function getParameters()
+    public
+    view
+    virtual
+    returns (
+        uint256 protocolFee,
+        uint256 currentMetadataVersion,
+        uint256 minMetadataVersion,
+        uint256 maxPriceAppreciation,
+        uint256 submissionDeposit
+    )
+    {
+        return (_protocolFee, _currentMetadataVersion, _minMetadataVersion, _maxPriceAppreciation, _submissionDeposit);
+    }
 }

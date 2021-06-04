@@ -99,7 +99,7 @@ describe('Directory', () => {
     );
 
     await expect(
-      userB.directoryContract.fund(
+      userB.directoryContract.submissionFund(
         userB.signer.address,
         1, // Token ID
         fakeHash,
@@ -145,7 +145,7 @@ describe('Directory', () => {
     );
 
     await expect(
-      await userB.directoryContract.fund(
+      await userB.directoryContract.submissionFund(
         userB.signer.address,
         1, // Token ID
         fakeHash,
@@ -197,7 +197,7 @@ describe('Directory', () => {
     );
 
     await expect(
-      userB.directoryContract.fund(
+      userB.directoryContract.submissionFund(
         userB.signer.address,
         1, // Token ID
         fakeHash,
@@ -244,7 +244,7 @@ describe('Directory', () => {
       web3.utils.toWei('100') // UNQ - reward
     );
 
-    await userB.directoryContract.fund(
+    await userB.directoryContract.submissionFund(
       userB.signer.address,
       1, // Token ID
       fakeHash,
@@ -254,7 +254,7 @@ describe('Directory', () => {
     );
 
     await expect(
-      userC.directoryContract.collect(
+      userC.directoryContract.uniquetteCollect(
         userC.signer.address,
         1, // Token ID
         {
@@ -297,7 +297,7 @@ describe('Directory', () => {
       web3.utils.toWei('100') // UNQ - reward
     );
 
-    await userB.directoryContract.fund(
+    await userB.directoryContract.submissionFund(
       userB.signer.address,
       1, // Token ID
       fakeHash,
@@ -315,7 +315,7 @@ describe('Directory', () => {
     );
 
     await expect(
-      userC.directoryContract.collect(
+      userC.directoryContract.uniquetteCollect(
         userC.signer.address,
         1, // Token ID
         {
@@ -361,7 +361,7 @@ describe('Directory', () => {
       web3.utils.toWei('100') // UNQ - reward
     );
 
-    await userB.directoryContract.fund(
+    await userB.directoryContract.submissionFund(
       userB.signer.address,
       1, // Token ID
       fakeHash,
@@ -424,7 +424,7 @@ describe('Directory', () => {
       web3.utils.toWei('100') // UNQ - reward
     );
 
-    await userB.directoryContract.fund(
+    await userB.directoryContract.submissionFund(
       userB.signer.address,
       1, // Token ID
       fakeHash,
@@ -491,7 +491,7 @@ describe('Directory', () => {
       web3.utils.toWei('100') // UNQ - reward
     );
 
-    await userB.directoryContract.fund(
+    await userB.directoryContract.submissionFund(
       userB.signer.address,
       1, // Token ID
       fakeHash,
@@ -524,7 +524,7 @@ describe('Directory', () => {
     );
 
     await expect(
-      userD.directoryContract.fund(
+      userD.directoryContract.submissionFund(
         userD.signer.address,
         1, // Token ID
         upgradeFakeHash,
@@ -569,7 +569,7 @@ describe('Directory', () => {
       web3.utils.toWei('100') // UNQ - reward
     );
 
-    await userB.directoryContract.fund(
+    await userB.directoryContract.submissionFund(
       userB.signer.address,
       1, // Token ID
       fakeHash,
@@ -602,7 +602,7 @@ describe('Directory', () => {
     );
 
     await expect(
-      await userD.directoryContract.fund(
+      await userD.directoryContract.submissionFund(
         userD.signer.address,
         1, // Token ID
         upgradeFakeHash,
@@ -659,7 +659,7 @@ describe('Directory', () => {
       web3.utils.toWei('100') // UNQ - reward
     );
 
-    await userB.directoryContract.fund(
+    await userB.directoryContract.submissionFund(
       userB.signer.address,
       1, // Token ID
       fakeHash,
@@ -692,7 +692,7 @@ describe('Directory', () => {
     );
 
     await expect(
-      userA.directoryContract.fund(
+      userA.directoryContract.submissionFund(
         userA.signer.address,
         1, // Token ID
         upgradeFakeHash,
@@ -738,7 +738,7 @@ describe('Directory', () => {
     );
 
     await expect(
-      userB.directoryContract.fund(
+      userB.directoryContract.submissionFund(
         userB.signer.address,
         1, // Token ID
         fakeHash,
@@ -812,7 +812,7 @@ describe('Directory', () => {
     );
 
     await expect(
-      userB.directoryContract.fund(
+      userB.directoryContract.submissionFund(
         userB.signer.address,
         1, // Token ID
         fakeHash,
@@ -845,7 +845,7 @@ describe('Directory', () => {
       );
 
     await expect(
-      userC.directoryContract.collect(
+      userC.directoryContract.uniquetteCollect(
         userC.signer.address,
         1, // Token ID
         {
@@ -888,7 +888,7 @@ describe('Directory', () => {
       web3.utils.toWei('100') // UNQ - reward
     );
 
-    await userB.directoryContract.fund(
+    await userB.directoryContract.submissionFund(
       userB.signer.address,
       1, // Token ID
       fakeHash,
@@ -901,7 +901,7 @@ describe('Directory', () => {
       value: web3.utils.toWei('3'),
     });
 
-    await userC.directoryContract.collect(
+    await userC.directoryContract.uniquetteCollect(
       userC.signer.address,
       1, // Token ID
       {
@@ -910,7 +910,7 @@ describe('Directory', () => {
     );
 
     await expect(
-      await userD.directoryContract.collect(
+      await userD.directoryContract.uniquetteCollect(
         userD.signer.address,
         1, // Token ID
         {
@@ -958,7 +958,7 @@ describe('Directory', () => {
       web3.utils.toWei('100') // UNQ - reward
     );
 
-    await userB.directoryContract.fund(
+    await userB.directoryContract.submissionFund(
       userB.signer.address,
       1, // Token ID
       fakeHash,
@@ -971,7 +971,7 @@ describe('Directory', () => {
       value: web3.utils.toWei('3'),
     });
 
-    await userC.directoryContract.collect(
+    await userC.directoryContract.uniquetteCollect(
       userC.signer.address,
       1, // Token ID
       {
@@ -980,7 +980,7 @@ describe('Directory', () => {
     );
 
     await expect(
-      userD.directoryContract.collect(
+      userD.directoryContract.uniquetteCollect(
         userD.signer.address,
         1, // Token ID
         {
@@ -1009,7 +1009,7 @@ describe('Directory', () => {
       web3.utils.toWei('100') // UNQ - reward
     );
 
-    await userB.directoryContract.fund(
+    await userB.directoryContract.submissionFund(
       userB.signer.address,
       1, // Token ID
       fakeHash,
@@ -1037,7 +1037,7 @@ describe('Directory', () => {
     );
 
     await expect(
-      userD.directoryContract.fund(
+      userD.directoryContract.submissionFund(
         userD.signer.address,
         1, // Token ID
         upgradeFakeHash,
@@ -1067,7 +1067,7 @@ describe('Directory', () => {
       web3.utils.toWei('100') // UNQ - reward
     );
 
-    await userB.directoryContract.fund(
+    await userB.directoryContract.submissionFund(
       userB.signer.address,
       1, // Token ID
       fakeHash,
@@ -1083,7 +1083,7 @@ describe('Directory', () => {
     ).not.eq(fakeHash);
 
     await expect(
-      userC.directoryContract.fund(
+      userC.directoryContract.submissionFund(
         userC.signer.address,
         1, // Token ID
         fakeHash,
@@ -1113,7 +1113,7 @@ describe('Directory', () => {
       web3.utils.toWei('100') // UNQ - reward
     );
 
-    await userB.directoryContract.fund(
+    await userB.directoryContract.submissionFund(
       userB.signer.address,
       1, // Token ID
       fakeHash,
@@ -1161,7 +1161,7 @@ describe('Directory', () => {
       web3.utils.toWei('100') // UNQ - reward
     );
 
-    await userB.directoryContract.fund(
+    await userB.directoryContract.submissionFund(
       userB.signer.address,
       1, // Token ID
       fakeHash,
@@ -1192,7 +1192,7 @@ describe('Directory', () => {
     );
 
     await expect(
-      userB.directoryContract.fund(
+      userB.directoryContract.submissionFund(
         userB.signer.address,
         1, // Token ID
         anotherFakeHash,
@@ -1255,7 +1255,7 @@ describe('Directory', () => {
     );
 
     await expect(
-      userA.directoryContract.fund(
+      userA.directoryContract.submissionFund(
         userA.signer.address,
         1, // Token ID
         fakeHash,
@@ -1300,7 +1300,7 @@ describe('Directory', () => {
       web3.utils.toWei('100') // UNQ - reward
     );
 
-    await userB.directoryContract.fund(
+    await userB.directoryContract.submissionFund(
       userB.signer.address,
       1, // Token ID
       fakeHash,
@@ -1333,7 +1333,7 @@ describe('Directory', () => {
     );
 
     await expect(
-      userC.directoryContract.fund(
+      userC.directoryContract.submissionFund(
         userC.signer.address,
         1, // Token ID
         upgradeFakeHash,
@@ -1378,7 +1378,7 @@ describe('Directory', () => {
       web3.utils.toWei('100') // UNQ - reward
     );
 
-    await userB.directoryContract.fund(
+    await userB.directoryContract.submissionFund(
       userB.signer.address,
       1, // Token ID
       fakeHash,
@@ -1411,7 +1411,7 @@ describe('Directory', () => {
     );
 
     await expect(
-      userB.directoryContract.fund(
+      userB.directoryContract.submissionFund(
         userB.signer.address,
         1, // Token ID
         upgradeFakeHash,
@@ -1483,7 +1483,7 @@ describe('Directory', () => {
       web3.utils.toWei('100') // UNQ - reward
     );
 
-    await userB.directoryContract.fund(
+    await userB.directoryContract.submissionFund(
       userB.signer.address,
       1, // Token ID
       fakeHash,

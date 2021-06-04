@@ -89,21 +89,6 @@ contract Directory is ContextUpgradeable, Common, Submissions, Uniquettes {
     //
     // Unique Directory functions
     //
-    function getParameters()
-        public
-        view
-        virtual
-        returns (
-            uint256 protocolFee,
-            uint256 currentMetadataVersion,
-            uint256 minMetadataVersion,
-            uint256 maxPriceAppreciation,
-            uint256 submissionDeposit
-        )
-    {
-        return (_protocolFee, _currentMetadataVersion, _minMetadataVersion, _maxPriceAppreciation, _submissionDeposit);
-    }
-
     function uniquetteGetFundedSubmission(uint256 tokenId) public view virtual returns (string memory) {
         return _fundedSubmissionHashByUniquetteTokenId[tokenId];
     }
@@ -124,7 +109,7 @@ contract Directory is ContextUpgradeable, Common, Submissions, Uniquettes {
         _submissions[hash].tokenId = newTokenId;
     }
 
-    function fund(
+    function submissionFund(
         address to,
         uint256 tokenId,
         string calldata submissionHash
@@ -151,13 +136,11 @@ contract Directory is ContextUpgradeable, Common, Submissions, Uniquettes {
             (, appreciatedPrice, , ) = uniquetteTakeOver(_msgSender(), to, tokenId, submission.addedValue);
 
             _token.mint(submission.author, submission.reward);
-            console.log('appreciatedPrice %s', appreciatedPrice);
-            console.log('msg.value %s', msg.value);
             emit SubmissionFunded(_msgSender(), to, tokenId, submissionHash, appreciatedPrice, msg.value);
         }
     }
 
-    function collect(address to, uint256 tokenId) public payable virtual tokenExists(tokenId) nonReentrant {
+    function uniquetteCollect(address to, uint256 tokenId) public payable virtual tokenExists(tokenId) nonReentrant {
         require(
             bytes(_fundedSubmissionHashByUniquetteTokenId[tokenId]).length > 0,
             "DIRECTORY/NO_SUBMISSION_FUNDED_FOR_UNIQUETTE"
