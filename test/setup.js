@@ -37,6 +37,20 @@ const setupTest = deployments.createFixture(
         directoryContract: await ethers.getContract('Directory', accounts[2]),
         vaultContract: await ethers.getContract('Vault', accounts[2]),
       },
+      userD: {
+        signer: await ethers.getSigner(accounts[3]),
+        tokenContract: await ethers.getContract('Token', accounts[3]),
+        treasuryContract: await ethers.getContract('Treasury', accounts[3]),
+        directoryContract: await ethers.getContract('Directory', accounts[3]),
+        vaultContract: await ethers.getContract('Vault', accounts[3]),
+      },
+      userE: {
+        signer: await ethers.getSigner(accounts[4]),
+        tokenContract: await ethers.getContract('Token', accounts[4]),
+        treasuryContract: await ethers.getContract('Treasury', accounts[4]),
+        directoryContract: await ethers.getContract('Directory', accounts[4]),
+        vaultContract: await ethers.getContract('Vault', accounts[4]),
+      },
     };
   }
 );

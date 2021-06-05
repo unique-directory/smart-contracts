@@ -5,6 +5,7 @@ require('@nomiclabs/hardhat-etherscan');
 require('@openzeppelin/hardhat-upgrades');
 require("solidity-coverage");
 require('hardhat-contract-sizer');
+require("hardhat-gas-reporter");
 
 require('dotenv').config();
 
@@ -65,4 +66,9 @@ module.exports = {
       default: 0,
     },
   },
+  gasReporter: {
+    coinmarketcap: process.env.COIN_MARKET_CAP_API_KEY,
+    currency: 'EUR',
+    enabled: true
+  }
 };
