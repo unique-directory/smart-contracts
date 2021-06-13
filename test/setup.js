@@ -1,3 +1,5 @@
+const web3 = require('web3');
+
 const setupTest = deployments.createFixture(
   async (
     {deployments, getNamedAccounts, getUnnamedAccounts, ethers},
@@ -7,6 +9,10 @@ const setupTest = deployments.createFixture(
     const accounts = await getUnnamedAccounts();
 
     await deployments.fixture();
+
+    (await ethers.getContract('Directory', governor)).setSubmissionDeposit(
+      web3.utils.toWei('0.1'),
+    );
 
     return {
       governor: {

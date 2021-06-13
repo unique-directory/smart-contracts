@@ -13,7 +13,7 @@ module.exports.calculateRequiredPayment = function (
     : effectivePriceBN.add(
         web3.utils.toBN(web3.utils.toWei(additionalCollateralEth))
       );
-  const protocolFeeAmountBN = effectivePriceBN.mul(protocolFeePercentBN).div(hundredPercentBN);
+  const protocolFeeAmountForCollectBN = effectivePriceBN.mul(protocolFeePercentBN).div(hundredPercentBN);
 
-  return principalAmount.add(protocolFeeAmountBN);
+  return principalAmount.add(protocolFeeAmountForCollectBN);
 };

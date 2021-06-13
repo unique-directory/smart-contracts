@@ -12,7 +12,9 @@
     "build": "npm run clean && npm run compile",
     "clean": "npx hardhat clean",
     "compile": "npx hardhat compile",
-    "coverage": "npm run build && npx hardhat coverage --temp artifacts --network hardhat"
+    "coverage": "npm run build && npx hardhat coverage --temp artifacts --network hardhat",
+    "unique:submission-create-bulk": "node ./scripts/submission-create-bulk.js",
+    "unique:submission-approve-bulk": "node ./scripts/submission-approve-bulk.js"
   },
   "keywords": [
     "ethereum",
