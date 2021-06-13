@@ -125,7 +125,7 @@ contract Submissions is Initializable, ContextUpgradeable, AccessControlUpgradea
         string calldata hash,
         uint256 metadataVersion,
         uint256 addedValue
-    ) public payable nonReentrant {
+    ) public payable {
         require(_submissions[hash].author == address(0), "SUBMISSIONS/ALREADY_CREATED");
         require(msg.value == _submissionDeposit, "SUBMISSIONS/EXACT_DEPOSIT_REQUIRED");
         require(metadataVersion >= _minMetadataVersion, "SUBMISSIONS/UNSUPPORTED_METADATA_VERSION");
@@ -178,10 +178,10 @@ contract Submissions is Initializable, ContextUpgradeable, AccessControlUpgradea
 
     function _afterSubmissionApprove(string memory hash) internal virtual {}
 
-    function submissionApprove(
+    function _approveSubmission(
         string calldata hash,
         uint256 rewardOverride
-    ) public isGovernor() submissionExists(hash) submissionIsPending(hash) submissionIsUpToDate(hash) nonReentrant {
+    ) internal virtual submissionExists(hash) submissionIsPending(hash) submissionIsUpToDate(hash) {
         _submissions[hash].reward = rewardOverride;
         _submissions[hash].status = SubmissionStatus.Approved;
 
@@ -190,14 +190,21 @@ contract Submissions is Initializable, ContextUpgradeable, AccessControlUpgradea
         emit SubmissionApproved(_msgSender(), _submissions[hash].author, hash, rewardOverride);
     }
 
+    function submissionApprove(
+        string calldata hash,
+        uint256 rewardOverride
+    ) public isGovernor() nonReentrant {
+        _approveSubmission(hash, rewardOverride);
+    }
+
     function submissionApproveBulk(
         string[] calldata hashes,
         uint256[] calldata rewards
-    ) public payable nonReentrant {
+    ) public isGovernor() nonReentrant {
         require(hashes.length == rewards.length, "Submissions: number of hashes do not match rewards");
 
         for (uint256 i = 0; i < hashes.length; ++i) {
-            this.submissionApprove(hashes[i], rewards[i]);
+            _approveSubmission(hashes[i], rewards[i]);
         }
     }
 
