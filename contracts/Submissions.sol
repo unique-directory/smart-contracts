@@ -82,11 +82,6 @@ contract Submissions is Initializable, ContextUpgradeable, AccessControlUpgradea
         _;
     }
 
-    modifier submissionIsNotFunded(string calldata hash) {
-        require(_submissions[hash].status != SubmissionStatus.Funded, "SUBMISSIONS/IS_FUNDED");
-        _;
-    }
-
     modifier submissionIsUpToDate(string calldata hash) {
         require(_submissions[hash].metadataVersion >= _minMetadataVersion, "SUBMISSIONS/OUTDATED_METADATA_VERSION");
         _;
@@ -146,9 +141,8 @@ contract Submissions is Initializable, ContextUpgradeable, AccessControlUpgradea
         emit SubmissionCreated(_msgSender(), tokenId, hash, addedValue, msg.value);
     }
 
-    function submissionUpdate(string calldata hash, uint256 addedValue)
+    function submissionUpdate(string calldata hash, uint256 tokenId, uint256 addedValue)
         public
-        payable
         submissionExists(hash)
         submissionIsPending(hash)
         submissionIsUpToDate(hash)
@@ -158,6 +152,7 @@ contract Submissions is Initializable, ContextUpgradeable, AccessControlUpgradea
             _submissions[hash].author == _msgSender() || hasRole(GOVERNOR_ROLE, _msgSender()),
             "SUBMISSIONS/NOT_AUTHOR_OR_GOVERNOR"
         );
+        _submissions[hash].tokenId = tokenId;
         _submissions[hash].addedValue = addedValue;
 
         emit SubmissionUpdated(_msgSender(), hash, addedValue);
@@ -218,12 +213,14 @@ contract Submissions is Initializable, ContextUpgradeable, AccessControlUpgradea
         delete _submissions[hash];
 
         // Seize the submit deposit to treasury
-        payable(address(_treasury)).sendValue(submissionDeposit);
+        if (submissionDeposit > 0) {
+            payable(address(_treasury)).sendValue(submissionDeposit);
+        }
 
         emit SubmissionRejected(_msgSender(), originalSubmitter, hash);
     }
 
-    function _markSubmissionAsFunded(string calldata hash) submissionExists(hash) submissionIsNotFunded(hash) internal virtual {
+    function _markSubmissionAsFunded(string calldata hash) submissionExists(hash) submissionIsApproved(hash) internal virtual {
         _submissions[hash].status = SubmissionStatus.Funded;
     }
 }
