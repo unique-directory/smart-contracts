@@ -265,7 +265,8 @@ contract Uniquettes is
 
         Uniquette memory uniquette = uniquetteGetById(tokenId);
 
-        require(msg.value > 0, "UNIQUETTES/PAYMENT_REQUIRED");
+        // Require some payment unless current owner is trying to fund a zero-value submission
+        require(msg.value > 0 || (operator == to || uniquette.owner == to), "UNIQUETTES/PAYMENT_REQUIRED");
 
         effectivePrice = calculateEffectivePrice(operator, to, uniquette);
         appreciatedPrice = effectivePrice + addedValue;
@@ -276,7 +277,6 @@ contract Uniquettes is
 
         uint256 additionalCollateral = principalAmount - effectivePrice;
 
-        require(protocolFeeAmount > 0, "UNIQUETTES/UNEXPECTED_ZERO_FEE");
         require(appreciatedPrice >= effectivePrice, "UNIQUETTES/UNEXPECTED_DEPRECIATED_PRICE");
         require(additionalCollateral <= msg.value, "UNIQUETTES/UNEXPECTED_EXCESS_COLLATERAL");
 
