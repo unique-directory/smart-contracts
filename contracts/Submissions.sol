@@ -82,11 +82,6 @@ contract Submissions is Initializable, ContextUpgradeable, AccessControlUpgradea
         _;
     }
 
-    modifier submissionIsNotFunded(string calldata hash) {
-        require(_submissions[hash].status != SubmissionStatus.Funded, "SUBMISSIONS/IS_FUNDED");
-        _;
-    }
-
     modifier submissionIsUpToDate(string calldata hash) {
         require(_submissions[hash].metadataVersion >= _minMetadataVersion, "SUBMISSIONS/OUTDATED_METADATA_VERSION");
         _;
@@ -130,7 +125,7 @@ contract Submissions is Initializable, ContextUpgradeable, AccessControlUpgradea
         string calldata hash,
         uint256 metadataVersion,
         uint256 addedValue
-    ) public payable nonReentrant {
+    ) public payable {
         require(_submissions[hash].author == address(0), "SUBMISSIONS/ALREADY_CREATED");
         require(msg.value == _submissionDeposit, "SUBMISSIONS/EXACT_DEPOSIT_REQUIRED");
         require(metadataVersion >= _minMetadataVersion, "SUBMISSIONS/UNSUPPORTED_METADATA_VERSION");
@@ -146,9 +141,8 @@ contract Submissions is Initializable, ContextUpgradeable, AccessControlUpgradea
         emit SubmissionCreated(_msgSender(), tokenId, hash, addedValue, msg.value);
     }
 
-    function submissionUpdate(string calldata hash, uint256 addedValue)
+    function submissionUpdate(string calldata hash, uint256 tokenId, uint256 addedValue)
         public
-        payable
         submissionExists(hash)
         submissionIsPending(hash)
         submissionIsUpToDate(hash)
@@ -158,6 +152,7 @@ contract Submissions is Initializable, ContextUpgradeable, AccessControlUpgradea
             _submissions[hash].author == _msgSender() || hasRole(GOVERNOR_ROLE, _msgSender()),
             "SUBMISSIONS/NOT_AUTHOR_OR_GOVERNOR"
         );
+        _submissions[hash].tokenId = tokenId;
         _submissions[hash].addedValue = addedValue;
 
         emit SubmissionUpdated(_msgSender(), hash, addedValue);
@@ -183,10 +178,10 @@ contract Submissions is Initializable, ContextUpgradeable, AccessControlUpgradea
 
     function _afterSubmissionApprove(string memory hash) internal virtual {}
 
-    function submissionApprove(
+    function _approveSubmission(
         string calldata hash,
         uint256 rewardOverride
-    ) public isGovernor() submissionExists(hash) submissionIsPending(hash) submissionIsUpToDate(hash) nonReentrant {
+    ) internal virtual submissionExists(hash) submissionIsPending(hash) submissionIsUpToDate(hash) {
         _submissions[hash].reward = rewardOverride;
         _submissions[hash].status = SubmissionStatus.Approved;
 
@@ -195,14 +190,21 @@ contract Submissions is Initializable, ContextUpgradeable, AccessControlUpgradea
         emit SubmissionApproved(_msgSender(), _submissions[hash].author, hash, rewardOverride);
     }
 
+    function submissionApprove(
+        string calldata hash,
+        uint256 rewardOverride
+    ) public isGovernor() nonReentrant {
+        _approveSubmission(hash, rewardOverride);
+    }
+
     function submissionApproveBulk(
         string[] calldata hashes,
         uint256[] calldata rewards
-    ) public payable nonReentrant {
+    ) public isGovernor() nonReentrant {
         require(hashes.length == rewards.length, "Submissions: number of hashes do not match rewards");
 
         for (uint256 i = 0; i < hashes.length; ++i) {
-            this.submissionApprove(hashes[i], rewards[i]);
+            _approveSubmission(hashes[i], rewards[i]);
         }
     }
 
@@ -218,12 +220,14 @@ contract Submissions is Initializable, ContextUpgradeable, AccessControlUpgradea
         delete _submissions[hash];
 
         // Seize the submit deposit to treasury
-        payable(address(_treasury)).sendValue(submissionDeposit);
+        if (submissionDeposit > 0) {
+            payable(address(_treasury)).sendValue(submissionDeposit);
+        }
 
         emit SubmissionRejected(_msgSender(), originalSubmitter, hash);
     }
 
-    function _markSubmissionAsFunded(string calldata hash) submissionExists(hash) submissionIsNotFunded(hash) internal virtual {
+    function _markSubmissionAsFunded(string calldata hash) submissionExists(hash) submissionIsApproved(hash) internal virtual {
         _submissions[hash].status = SubmissionStatus.Funded;
     }
 }

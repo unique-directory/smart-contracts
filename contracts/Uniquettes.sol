@@ -284,7 +284,7 @@ contract Uniquettes is
         _uniquettes[tokenId].collateralValue += additionalCollateral;
 
         // Remember last amount this uniquette was sold for
-        _uniquettes[tokenId].lastPurchaseAmount = principalAmount;
+        _uniquettes[tokenId].lastPurchaseAmount = appreciatedPrice;
 
         // Transfer ownership of uniquette in ERC-721 fashion (and remember the seller)
         address seller = uniquette.owner;

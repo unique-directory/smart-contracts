@@ -855,24 +855,31 @@ describe('Directory', () => {
       );
 
     await expect(
-      userC.directoryContract.uniquetteCollect(
+      await userC.directoryContract.uniquetteCollect(
         userC.signer.address,
         1, // Token ID
         {
           value: calculateRequiredPayment('4.4').toString(), // ETH : (last principal amount + max appreciation) + fee
         }
       )
-    )
-      .to.emit(userC.directoryContract, 'UniquetteCollected')
-      .withArgs(
-        userC.signer.address,
-        userB.signer.address,
-        userC.signer.address,
-        1,
+    ).to.changeEtherBalances(
+      [
+        userB.directoryContract,
+        userB.vaultContract,
+        userB.treasuryContract,
+        userA.signer,
+        userB.signer,
+        userC.signer,
+      ],
+      [
+        web3.utils.toWei('0'),
+        web3.utils.toWei('0'),
+        web3.utils.toWei('0.22'),
+        web3.utils.toWei('0'),
         web3.utils.toWei('4.4'),
-        web3.utils.toWei('4.4'),
-        web3.utils.toWei('4.4')
-      );
+        web3.utils.toWei('-4.62'),
+      ]
+    );
 
     const uniquette = await userC.directoryContract.uniquetteGetById(
       1 // Token ID
