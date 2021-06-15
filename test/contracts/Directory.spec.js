@@ -99,7 +99,7 @@ describe('Directory', () => {
     );
 
     await expect(
-      userB.directoryContract.submissionFund(
+      await userB.directoryContract.submissionFund(
         userB.signer.address,
         1, // Token ID
         fakeHash,
@@ -107,16 +107,22 @@ describe('Directory', () => {
           value: calculateRequiredPayment('1').toString(), // ETH : valueAdded + fee
         }
       )
-    )
-      .to.emit(userA.directoryContract, 'SubmissionFunded')
-      .withArgs(
-        userB.signer.address,
-        userB.signer.address,
-        1,
-        fakeHash,
+    ).to.changeEtherBalances(
+      [
+        userB.directoryContract,
+        userB.vaultContract,
+        userB.treasuryContract,
+        userA.signer,
+        userB.signer,
+      ],
+      [
+        web3.utils.toWei('0'),
         web3.utils.toWei('1'),
-        web3.utils.toWei('1.05')
-      );
+        web3.utils.toWei('0.05'),
+        web3.utils.toWei('0'),
+        web3.utils.toWei('-1.05'),
+      ]
+    );
 
     const uniquette = await userB.directoryContract.uniquetteGetById(
       1 // Token ID
@@ -1339,24 +1345,30 @@ describe('Directory', () => {
     );
 
     await expect(
-      userC.directoryContract.submissionFund(
+      await userC.directoryContract.submissionFund(
         userC.signer.address,
         1, // Token ID
         upgradeFakeHash,
         {
-          value: calculateRequiredPayment('1.6').toString(), // ETH : valueAdded + fee
+          value: calculateRequiredPayment('1.6').toString(), // ETH : appreciatedPrice + valueAdded + fee
         }
       )
-    )
-      .to.emit(userC.directoryContract, 'SubmissionFunded')
-      .withArgs(
-        userC.signer.address,
-        userC.signer.address,
-        1,
-        upgradeFakeHash,
-        web3.utils.toWei('1.6'),
-        web3.utils.toWei('1.68')
-      );
+    ).to.changeEtherBalances(
+      [
+        userC.directoryContract,
+        userC.vaultContract,
+        userC.treasuryContract,
+        userA.signer,
+        userC.signer,
+      ],
+      [
+        web3.utils.toWei('0'),
+        web3.utils.toWei('0.5'),
+        web3.utils.toWei('0.08'),
+        web3.utils.toWei('0'),
+        web3.utils.toWei('-1.68'),
+      ]
+    );
 
     await expect(
       userB.directoryContract.uniquetteGetFundedSubmission(
@@ -1365,7 +1377,7 @@ describe('Directory', () => {
     ).not.eq(upgradeFakeHash);
   });
 
-  it('should allow owner to fund new submission of its own uniquette', async () => {
+  it('should allow owner to fund a submission of their own uniquette by paying only the added value', async () => {
     const {userA, userB, userC, governor} = await setupTest();
     const fakeHash = uuid();
 
@@ -1417,24 +1429,99 @@ describe('Directory', () => {
     );
 
     await expect(
-      userB.directoryContract.submissionFund(
+      await userB.directoryContract.submissionFund(
         userB.signer.address,
         1, // Token ID
         upgradeFakeHash,
         {
-          value: calculateRequiredPayment('1.6').toString(), // ETH : valueAdded + fee
+          value: calculateRequiredPayment('0.5').toString(), // ETH : valueAdded + fee
         }
       )
-    )
-      .to.emit(userC.directoryContract, 'SubmissionFunded')
-      .withArgs(
+    ).to.changeEtherBalances(
+      [
+        userB.directoryContract,
+        userB.vaultContract,
+        userB.treasuryContract,
+        userA.signer,
+        userB.signer,
+      ],
+      [
+        web3.utils.toWei('0'),
+        web3.utils.toWei('0.5'),
+        web3.utils.toWei('0.025'),
+        web3.utils.toWei('0'),
+        web3.utils.toWei('-0.525'),
+      ]
+    );
+
+    await expect(
+      userB.directoryContract.uniquetteGetFundedSubmission(
+        1 // Token ID
+      )
+    ).not.eq(upgradeFakeHash);
+  });
+
+  it('should not allow another person to fund a submission for the current owner by paying only the added value', async () => {
+    const {userA, userB, userC, userD, governor} = await setupTest();
+    const fakeHash = uuid();
+
+    await userA.directoryContract.submissionCreate(
+      0,
+      fakeHash,
+      1, // Schema v1
+      web3.utils.toWei('1'), // ETH - valueAdded
+      {
+        value: web3.utils.toWei('0.1'), // ETH
+      }
+    );
+
+    await governor.directoryContract.submissionApprove(
+      fakeHash,
+      web3.utils.toWei('100') // UNQ - reward
+    );
+
+    await userB.directoryContract.submissionFund(
+      userB.signer.address,
+      1, // Token ID
+      fakeHash,
+      {
+        value: calculateRequiredPayment('1').toString(), // ETH : valueAdded + fee
+      }
+    );
+
+    await expect(
+      userB.directoryContract.uniquetteGetFundedSubmission(
+        1 // Token ID
+      )
+    ).not.eq(fakeHash);
+
+    const upgradeFakeHash = uuid();
+
+    await userC.directoryContract.submissionCreate(
+      1, // existing uniquette with tokenId = 1
+      upgradeFakeHash,
+      1, // Schema v1
+      web3.utils.toWei('0.5'), // ETH - valueAdded
+      {
+        value: web3.utils.toWei('0.1'), // ETH
+      }
+    );
+
+    await governor.directoryContract.submissionApprove(
+      upgradeFakeHash,
+      web3.utils.toWei('150') // UNQ
+    );
+
+    await expect(
+      userD.directoryContract.submissionFund(
         userB.signer.address,
-        userB.signer.address,
-        1,
+        1, // Token ID
         upgradeFakeHash,
-        web3.utils.toWei('1.6'),
-        web3.utils.toWei('1.68')
-      );
+        {
+          value: calculateRequiredPayment('0.5').toString(), // ETH : valueAdded + fee
+        }
+      )
+    ).to.be.revertedWith('UNIQUETTES/NOT_ENOUGH_PRINCIPAL');
 
     await expect(
       userB.directoryContract.uniquetteGetFundedSubmission(
