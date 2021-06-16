@@ -266,7 +266,7 @@ contract Uniquettes is
         Uniquette memory uniquette = uniquetteGetById(tokenId);
 
         // Require some payment unless current owner is trying to fund a zero-value submission
-        require(msg.value > 0 || (operator == to || uniquette.owner == to), "UNIQUETTES/PAYMENT_REQUIRED");
+        require(msg.value > 0 || (addedValue == 0 && operator == to && uniquette.owner == to), "UNIQUETTES/PAYMENT_REQUIRED");
 
         effectivePrice = calculateEffectivePrice(operator, to, uniquette);
         appreciatedPrice = effectivePrice + addedValue;
