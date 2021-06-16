@@ -265,9 +265,10 @@ contract Uniquettes is
 
         Uniquette memory uniquette = uniquetteGetById(tokenId);
 
-        require(msg.value > 0, "UNIQUETTES/PAYMENT_REQUIRED");
+        // Require some payment unless current owner is trying to fund a zero-value submission
+        require(msg.value > 0 || (addedValue == 0 && operator == to && uniquette.owner == to), "UNIQUETTES/PAYMENT_REQUIRED");
 
-        effectivePrice = calculateEffectivePrice(uniquette);
+        effectivePrice = calculateEffectivePrice(operator, to, uniquette);
         appreciatedPrice = effectivePrice + addedValue;
         protocolFeeAmount = (appreciatedPrice * _protocolFee) / 10000;
         principalAmount = msg.value - protocolFeeAmount;
@@ -276,7 +277,6 @@ contract Uniquettes is
 
         uint256 additionalCollateral = principalAmount - effectivePrice;
 
-        require(protocolFeeAmount > 0, "UNIQUETTES/UNEXPECTED_ZERO_FEE");
         require(appreciatedPrice >= effectivePrice, "UNIQUETTES/UNEXPECTED_DEPRECIATED_PRICE");
         require(additionalCollateral <= msg.value, "UNIQUETTES/UNEXPECTED_EXCESS_COLLATERAL");
 
@@ -313,7 +313,13 @@ contract Uniquettes is
         );
     }
 
-    function calculateEffectivePrice(Uniquette memory uniquette) internal view virtual returns (uint256) {
+    function calculateEffectivePrice(address operator, address to, Uniquette memory uniquette) internal view virtual returns (uint256) {
+        // If current owner is trying to fund a submission for their own uniquette
+        // then effective price they need to pay for the uniquette itself must be 0.
+        if (operator == to && uniquette.owner == to) {
+            return 0;
+        }
+
         if (uniquette.lastPurchaseAmount < uniquette.collateralValue) {
             return uniquette.collateralValue + ((uniquette.collateralValue * _maxPriceAppreciation) / 10000);
         } else {
