@@ -46,7 +46,8 @@ async function main() {
         addedValues,
       );
     } catch (err) {
-      console.log(`Failed: ${err}`);
+      console.log(`Failed`);
+      console.log((err.error && err.error.toString()) || (err.reason && err.reason.toString()) || err);
     }
   }
 
