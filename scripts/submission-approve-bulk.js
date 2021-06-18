@@ -1,42 +1,46 @@
 const hre = require("hardhat");
 const web3 = require("web3");
+const csvtojson = require('csvtojson');
+const _ = require('lodash');
 
 if (!process.env.HARDHAT_NETWORK) {
   throw new Error('Must provide HARDHAT_NETWORK env');
 }
 
+if (!process.env.INPUT_FILE) {
+  throw new Error('Must provide INPUT_FILE env');
+}
+
 async function main() {
   const { deployer } = await hre.getNamedAccounts();
 
-  // TODO Build a CSV parser to read from a file
-  const hashes = [
-    'QmbM9GSzoRCDchirf7DGh5uPQrCAoD8fGtEQTDS9KEoekN',
-    'QmdwN3HKoWtk25YfNcLGTsNHipnMNicziyCveRSxc685k6',
-    'Qmd8Rrmw79idKzctxfvowCg7jFA5pStCPK4ek1qBgH8HDZ',
-    'QmcoRSjkpBgnk9RNV79t3Gho7D487YZ3VPk8bdgxZu3WKP',
-    'QmNdZxeZKLmU9Gj5iDQRaLWP6pe8ucHabqFKRGCCtpAUsj',
-    'QmeQ5PxiSdH7w4zaaCXR6vsrJGRZG54ZZoopat7mTkfnzC',
-    'QmcNDKz5GfjRxqyd9PuXei19DWeKgA1SSk6Pohak3BzAQC',
-    'QmZnMsvtWXX8EgLGrUYZaHj5aRKZEWn8rwg1wUXBX75v5p',
-    'QmU8CrXjpe7m9Eo5DJqXoz3VjkHn2aHVf8o5pMUBYVosq3',
-    'QmNNpyTvgoZ7Ruy6TMVT62McNj738aiamCev5NKF8HS9hA',
-    'QmS4cYaSpQgSpLtwu8aFHdSW4sAuT63bmGAFD11f6qaNGM',
-    'Qme4oyBXEiUWBsXnn3tBVwwR3eTZfitFzTKM9khRMQM8LZ',
-    'QmXsTUNX3cgypXwkmFiU3owjv4gvc8f4gHW5EiiWyk2XpP'
-  ];
-  const rewards = Array(hashes.length).fill(
-    web3.utils.toWei('100')
-  );
+  const hashes = _.flattenDeep(await csvtojson({ noheader: true, ignoreEmpty: true }).fromFile(process.env.INPUT_FILE));
 
   console.log(`Approving ${hashes.length} submissions...`);
 
-  await hre.deployments.execute(
-    'Directory',
-    {from: deployer},
-    'submissionApproveBulk',
-    hashes,
-    rewards,
-  );
+  const batchSize = parseInt(process.env.BATCH_SIZE);
+
+  for (let i = 0;  i < hashes.length; i += batchSize) {
+    const chunked = hashes.slice(i, i + batchSize).map(h => h.field1);
+
+    const rewards = Array(chunked.length).fill(
+      web3.utils.toWei('100')
+    );
+
+    try {
+      console.log(`Trying to approve: ${chunked.length}`);
+      console.log(`- Hashes: ${chunked.join(', ')}`);
+      await hre.deployments.execute(
+        'Directory',
+        {from: deployer},
+        'submissionApproveBulk',
+        chunked,
+        rewards,
+      );
+    } catch (err) {
+      console.log(`Failed: ${err}`);
+    }
+  }
 
   console.log(`Finished!`);
 }
