@@ -1,41 +1,55 @@
 const hre = require("hardhat");
 const web3 = require("web3");
+const csvtojson = require('csvtojson');
+const _ = require('lodash');
 
 if (!process.env.HARDHAT_NETWORK) {
   throw new Error('Must provide HARDHAT_NETWORK env');
 }
 
+if (!process.env.INPUT_FILE) {
+  throw new Error('Must provide INPUT_FILE env');
+}
+
+if (!process.env.BATCH_SIZE) {
+  throw new Error('Must provide BATCH_SIZE env');
+}
+
 async function main() {
   const { deployer } = await hre.getNamedAccounts();
 
-  // TODO Build a CSV parser to read from a file
-  const hashes = [
-    // 'QmPGpPPtZxtCpKfqLsrdg4YvRqaT5mg46FxppoVA21Qr9V',
-    // 'QmW9KdEa9vAgw6kqLC73kCKeSDoxjW5jag6XcvYzxjwa6R',
-    // 'QmUXSH3S42iPpuqD41aZm7W9mNzZffmRkkJhK2m9bv2PEm',
-    // 'QmPWcsb9KjnofcU7D6mz7HNQwyuQGxMnwZiknb1HJBYXHj',
-    // 'QmafZo9P38eduXB2XBQ67RrmPBczUYetrBf7s4KgHp5qQa',
-    // 'QmPi3xRFJ2pGpTQtrbWQSdMWqoRaKrDpUzaMAfVXniaQGZ',
-    // 'QmU26QRSnnwK4Su2Md3aU6bbXjNfEKziJKhStwJeQhjrcZ',
-    'QmWCPjSf3n8PCfMZBrCCd8LZMXFVjt4hzcM5WJEn965djh'
-  ];
-  const metadataVersions = Array(hashes.length).fill(1);
-  const tokenIds = Array(hashes.length).fill(0);
-  const addedValues = Array(hashes.length).fill(
-    web3.utils.toWei('0.5')
-  );
+  const hashes = _.flattenDeep(await csvtojson({ noheader: true, ignoreEmpty: true }).fromFile(process.env.INPUT_FILE));
 
   console.log(`Creating ${hashes.length} submissions...`);
 
-  await hre.deployments.execute(
-    'Directory',
-    {from: deployer},
-    'submissionCreateBulk',
-    hashes,
-    metadataVersions,
-    tokenIds,
-    addedValues,
-  );
+  const batchSize = parseInt(process.env.BATCH_SIZE);
+
+  for (let i = 0;  i < hashes.length; i += batchSize) {
+    const chunked = hashes.slice(i, i + batchSize).map(h => h.field1);
+
+    const metadataVersions = Array(chunked.length).fill(1);
+    const tokenIds = Array(chunked.length).fill(0);
+    const addedValues = Array(chunked.length).fill(
+      web3.utils.toWei('0.5')
+    );
+
+    try {
+      console.log(`Trying to create: ${chunked.length}`);
+      console.log(`- Hashes: ${chunked.join(', ')}`);
+      await hre.deployments.execute(
+        'Directory',
+        { from: deployer },
+        'submissionCreateBulk',
+        chunked,
+        metadataVersions,
+        tokenIds,
+        addedValues,
+      );
+    } catch (err) {
+      console.log(`Failed: ${err}`);
+    }
+  }
+
 
   console.log(`Finished!`);
 }
