@@ -15,6 +15,10 @@ if (!process.env.BATCH_SIZE) {
   throw new Error('Must provide BATCH_SIZE env');
 }
 
+if (!process.env.PRICE_IN_ETH) {
+  throw new Error('Must provide PRICE_IN_ETH env');
+}
+
 async function main() {
   const { deployer } = await hre.getNamedAccounts();
 
@@ -23,6 +27,7 @@ async function main() {
   console.log(`Creating ${hashes.length} submissions...`);
 
   const batchSize = parseInt(process.env.BATCH_SIZE);
+  const priceInEth = parseFloat(process.env.PRICE_IN_ETH);
 
   for (let i = 0;  i < hashes.length; i += batchSize) {
     const chunked = hashes.slice(i, i + batchSize).map(h => h.field1);
@@ -30,7 +35,7 @@ async function main() {
     const metadataVersions = Array(chunked.length).fill(1);
     const tokenIds = Array(chunked.length).fill(0);
     const addedValues = Array(chunked.length).fill(
-      web3.utils.toWei('0.5')
+      web3.utils.toWei(priceInEth.toString())
     );
 
     try {
