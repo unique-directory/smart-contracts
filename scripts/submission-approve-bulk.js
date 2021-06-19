@@ -30,13 +30,14 @@ async function main() {
     try {
       console.log(`Trying to approve: ${chunked.length}`);
       console.log(`- Hashes: ${chunked.join(', ')}`);
-      await hre.deployments.execute(
+      const receipt = await hre.deployments.execute(
         'Directory',
         {from: deployer},
         'submissionApproveBulk',
         chunked,
         rewards,
       );
+      console.log(`Done using ${receipt.gasUsed} gas`);
     } catch (err) {
       console.log(`Failed`);
       console.log((err.error && err.error.toString()) || (err.reason && err.reason.toString()) || err);

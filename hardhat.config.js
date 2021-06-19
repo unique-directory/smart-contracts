@@ -32,6 +32,10 @@ module.exports = {
   defaultNetwork: 'hardhat',
   networks: {
     hardhat: {},
+    localhost: {
+      url: `http://127.0.0.1:8545`,
+      network_id: '*'
+    },
     rinkeby: {
       url: `https://rinkeby.infura.io/v3/${INFURA_PROJECT_ID}`,
       network_id: '*',
