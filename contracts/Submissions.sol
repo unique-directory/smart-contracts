@@ -25,6 +25,7 @@ contract Submissions is Initializable, ContextUpgradeable, AccessControlUpgradea
         uint256 reward; // How many UNQ erc-20 tokens to reward for author
         uint256 metadataVersion; // Version of metadata of the submission
         uint256 tokenId; // Which Uniquette is this submission targeted to upgrade (it is 0 for new Uniquette submissions)
+        uint256 parentHash; // Hash of parent when submission is an upgrade for an existing one
         uint256 deposit; // How much author have deposited as submission deposit (to prevent spam)
         SubmissionStatus status;
     }

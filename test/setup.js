@@ -10,8 +10,11 @@ const setupTest = deployments.createFixture(
 
     await deployments.fixture();
 
-    (await ethers.getContract('Directory', governor)).setSubmissionDeposit(
-      web3.utils.toWei('0.1'),
+    await deployments.execute(
+      'Directory',
+      {from: governor},
+      'setSubmissionDeposit',
+      web3.utils.toWei('0.1')
     );
 
     return {

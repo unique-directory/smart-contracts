@@ -22,7 +22,7 @@ module.exports = async ({getNamedAccounts, deployments}) => {
     1, // minMetadataVersion
     1, // currentMetadataVersion
     1000, // maxPriceAppreciation: 10%
-    web3.utils.toWei('0') // submissionDeposit: 0.1 ETH
+    web3.utils.toWei('0') // submissionDeposit: 0 ETH
   ];
 
   await deployUpgradableContract(deployments, deployer, governor, 'Directory', contractArguments);
