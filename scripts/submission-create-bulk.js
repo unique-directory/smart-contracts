@@ -20,7 +20,7 @@ if (!process.env.PRICE_IN_ETH) {
 }
 
 async function main() {
-  const { deployer } = await hre.getNamedAccounts();
+  const { uniquedev } = await hre.getNamedAccounts();
 
   const hashes = _.flattenDeep(await csvtojson({ noheader: true, ignoreEmpty: true }).fromFile(process.env.INPUT_FILE));
 
@@ -43,7 +43,7 @@ async function main() {
       console.log(`- Hashes: ${chunked.join(', ')}`);
       const receipt = await hre.deployments.execute(
         'Directory',
-        { from: deployer },
+        { from: uniquedev },
         'submissionCreateBulk',
         chunked,
         metadataVersions,
@@ -52,11 +52,11 @@ async function main() {
       );
       console.log(`Done using ${receipt.gasUsed} gas`);
     } catch (err) {
+      console.log(err);
       console.log(`Failed`);
       console.log((err.error && err.error.toString()) || (err.reason && err.reason.toString()) || err);
     }
   }
-
 
   console.log(`Finished!`);
 }

@@ -8,7 +8,6 @@ import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol"
 import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol";
 
 import "./PaymentRecipient.sol";
-import "./Directory.sol";
 
 contract Marketer is
     Initializable,
@@ -19,7 +18,7 @@ contract Marketer is
 {
     bytes32 public constant GOVERNOR_ROLE = keccak256("GOVERNOR_ROLE");
 
-    Directory private _directory;
+    address private _directory;
 
     function initialize() public initializer {
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
@@ -50,7 +49,7 @@ contract Marketer is
     // Admin functions
     //
     function setDirectoryAddress(address newAddress) public virtual isGovernor() {
-        _directory = Directory(newAddress);
+        _directory = newAddress;
     }
 
     // TODO Implement exchange integrations (Wyvern Protocol, Rarible, etc.)

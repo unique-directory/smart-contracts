@@ -11,6 +11,7 @@ require('dotenv').config();
 
 const INFURA_PROJECT_ID = process.env.INFURA_PROJECT_ID;
 const DEPLOYER_PRIVATE_KEY = process.env.DEPLOYER_PRIVATE_KEY;
+const UNIQUEDEV_PRIVATE_KEY = process.env.UNIQUEDEV_PRIVATE_KEY;
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY;
 
 // You need to export an object to set up your config
@@ -40,7 +41,7 @@ module.exports = {
       url: `https://rinkeby.infura.io/v3/${INFURA_PROJECT_ID}`,
       network_id: '*',
       ...(DEPLOYER_PRIVATE_KEY
-        ? {accounts: [`0x${DEPLOYER_PRIVATE_KEY}`]}
+        ? {accounts: [`0x${DEPLOYER_PRIVATE_KEY}`, `0x${UNIQUEDEV_PRIVATE_KEY}`]}
         : {}),
     },
     bsc_testnet: {
@@ -48,8 +49,16 @@ module.exports = {
       chainId: 97,
       gasPrice: 20000000000,
       ...(DEPLOYER_PRIVATE_KEY
-        ? {accounts: [`0x${DEPLOYER_PRIVATE_KEY}`]}
+        ? {accounts: [`0x${DEPLOYER_PRIVATE_KEY}`, `0x${UNIQUEDEV_PRIVATE_KEY}`]}
         : {}),
+    },
+    mainnet: {
+      url: `https://mainnet.infura.io/v3/${INFURA_PROJECT_ID}`,
+      network_id: '*',
+      ...(DEPLOYER_PRIVATE_KEY
+        ? {accounts: [`0x${DEPLOYER_PRIVATE_KEY}`, `0x${UNIQUEDEV_PRIVATE_KEY}`]}
+        : {}),
+      gasPrice: 7500000000
     },
   },
   etherscan: {
@@ -68,6 +77,9 @@ module.exports = {
     },
     governor: {
       default: 0,
+    },
+    uniquedev: {
+      default: 1,
     },
   },
   gasReporter: {

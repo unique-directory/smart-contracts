@@ -11,6 +11,10 @@ if (!process.env.INPUT_FILE) {
   throw new Error('Must provide INPUT_FILE env');
 }
 
+if (!process.env.REWARD_IN_UNQ) {
+  throw new Error('Must provide REWARD_IN_UNQ env');
+}
+
 async function main() {
   const { deployer } = await hre.getNamedAccounts();
 
@@ -24,7 +28,7 @@ async function main() {
     const chunked = hashes.slice(i, i + batchSize).map(h => h.field1);
 
     const rewards = Array(chunked.length).fill(
-      web3.utils.toWei('100')
+      web3.utils.toWei(process.env.REWARD_IN_UNQ)
     );
 
     try {
