@@ -14,6 +14,10 @@ const DEPLOYER_PRIVATE_KEY = process.env.DEPLOYER_PRIVATE_KEY;
 const UNIQUEDEV_PRIVATE_KEY = process.env.UNIQUEDEV_PRIVATE_KEY;
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY;
 
+if (!process.env.GAS_PRICE) {
+  throw new Error('Must provide GAS_PRICE e.g. export GAS_PRICE=5500000000')
+}
+
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
 
@@ -47,7 +51,7 @@ module.exports = {
     bsc_testnet: {
       url: "https://data-seed-prebsc-1-s1.binance.org:8545",
       chainId: 97,
-      gasPrice: 20000000000,
+      gasPrice: parseInt(process.env.GAS_PRICE),
       ...(DEPLOYER_PRIVATE_KEY
         ? {accounts: [`0x${DEPLOYER_PRIVATE_KEY}`, `0x${UNIQUEDEV_PRIVATE_KEY}`]}
         : {}),
@@ -55,10 +59,10 @@ module.exports = {
     mainnet: {
       url: `https://mainnet.infura.io/v3/${INFURA_PROJECT_ID}`,
       network_id: '*',
+      gasPrice: parseInt(process.env.GAS_PRICE),
       ...(DEPLOYER_PRIVATE_KEY
         ? {accounts: [`0x${DEPLOYER_PRIVATE_KEY}`, `0x${UNIQUEDEV_PRIVATE_KEY}`]}
-        : {}),
-      gasPrice: 7500000000
+        : {})
     },
   },
   etherscan: {
