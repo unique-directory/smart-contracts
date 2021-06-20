@@ -50,8 +50,8 @@ contract Directory is ContextUpgradeable, Common, Submissions, Uniquettes {
             maxPriceAppreciation,
             submissionDeposit
         );
-        __Uniquettes_init_unchained(name, symbol, token, vault, treasury, marketer);
-        __Submissions_init_unchained(treasury);
+        __Uniquettes_init(name, symbol, token, vault, treasury, marketer);
+        __Submissions_init(treasury);
 
         _token = Token(token);
         _vault = Vault(vault);

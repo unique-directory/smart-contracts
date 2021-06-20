@@ -6,4 +6,4 @@ module.exports = async ({getNamedAccounts, deployments}) => {
   await deployUpgradableContract(deployments, deployer, governor, 'Vault', []);
 };
 
-module.exports.tags = ['Treasury'];
+module.exports.tags = ['Vault'];
