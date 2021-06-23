@@ -6,6 +6,18 @@ const {setupTest} = require('../setup');
 const {calculateRequiredPayment} = require('../util');
 
 describe('Directory', () => {
+  it('should return correct name and symbol', async () => {
+    const {userA} = await setupTest();
+
+    await expect(
+      await userA.directoryContract.name()
+    ).to.equal('Unique Directory NFT Uniquettes');
+
+    await expect(
+      await userA.directoryContract.symbol()
+    ).to.equal('UQT');
+  });
+
   it('should create a new submission for a new uniquette', async () => {
     const {userA} = await setupTest();
     const fakeHash = uuid();
